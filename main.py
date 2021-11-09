@@ -7,7 +7,40 @@ import requests
 import re
 from PIL import ImageColor
 
+# A very overkill solution to caching common usernames however, it works and is good SQL practice.
+# Obviously only 
+UseSQL = False
+if UseSQL == True:
+    import mysql.connector
+    DB = mysql.connector.connect()
+    print(DB)
+
+
+
 bot = commands.Bot(command_prefix='>')
+
+def save_to_DB(user, username):
+
+    print(user)
+    print(username)
+
+    cursor = DB.cursor()
+    sql = f"CREATE TABLE IF NOT EXISTS {user} (quantity INT, ign VARCHAR(255))"
+    cursor.execut(sql)
+    sql = f"SELECT * FROM {user} WHERE text LIKE {username} LIMIT 1"
+    cursor.execute(sql)
+
+    Result = cursor.fetchall()
+    
+    print(Result)
+
+    if len(Result) == 0:
+        sql = f"INSERT INTO {user} (quantity, ign)"
+        values = (1,username)
+        cursor.execute(sql,values)
+    else:
+        sql = f"UPDATE {user} SET {Result} quantity = 2"
+
 
 @bot.command()
 async def ping(ctx):
@@ -94,6 +127,12 @@ async def rc(ctx):
         item.set_thumbnail(url=image)
         item.set_footer(text="Razebot by MaximumMaxx")
         await ctx.send(embed = item)
+
+        # Upon successful completion aka getting the embed output
+
+        if UseSQL == True:
+            save_to_DB(ctx.author.id,name.content)
+
     except TimeoutError:
         embed = discord.Embed(title="Timeout, took too long", description=f"A 30 second timeout ran out." ,color=discord.Color.red())
         await ctx.send(embed = embed)
