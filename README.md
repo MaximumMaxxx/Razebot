@@ -5,7 +5,6 @@
 <h5 align="center"> Razebot</h5>
 </p>
 
-A discord bot for all things VALORANT
 
 <h3>Features</h3>
 Default command is ">"
