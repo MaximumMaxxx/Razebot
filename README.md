@@ -5,8 +5,7 @@
 <h5 align="center"> Razebot</h5>
 </p>
 
-A discord bot developed by MaximumMaxx#0001 for a small private discord server.
-Feel free to host the bot yourself if you want to use it. There are currently no plans to comericalize it.
+A discord bot for all things VALORANT
 
 <h3>Features</h3>
 Default command is ">"
