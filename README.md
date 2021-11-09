@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true">
-        <img src="assets/Logo.png" alt="Logo" width="160" height="160">
+        <img src="assets/Valobot logo raze thicckened.png" alt="Logo" width="160" height="160">
     </a>
 <h5 align="center"> Razebot</h5>
 </p>
