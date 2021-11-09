@@ -5,6 +5,11 @@
 <h5 align="center"> Razebot</h5>
 </p>
 
+<h3>Notice</h3>
+The bot was built on and for Linux 64 systems and Python 3.9+.
+
+If you're on Windows you might need to modify some stuff.
+If you're using a lower version of python, you might need to modify some stuff.
 
 <h3>Features</h3>
 Default command is ">"
