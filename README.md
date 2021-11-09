@@ -1,4 +1,4 @@
-![Logo](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true)
+![Logo](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true?thumbnail)
 
 
 # Razebot
