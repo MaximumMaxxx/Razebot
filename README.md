@@ -25,3 +25,7 @@ Asks a few questions and produces a little embed with the rank and such
 [Inspirtation and guidence: Valorant Rank Yoinker](https://github.com/isaacKenyon/VALORANT-rank-yoinker)
 
 Also a bunch of articles and stack overflow helps.
+
+<h3>Legal Stuff</h3>
+
+THIS PROJECT IS NOT ASSOCIATED OR ENDORSED BY RIOT GAMES. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
