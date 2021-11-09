@@ -101,4 +101,4 @@ async def rc(ctx):
         embed = discord.Embed(title="Something broke in a very bad way", description=f"Please send help" ,color=discord.Color.red())
         await ctx.send(embed = embed)
 
-bot.run('OTA3MDkxMjQzNDU5MjgwODk3.YYiIjQ.F2MvlD9ie7i_emLN8uPIRH8-GjU')
+bot.run('')
