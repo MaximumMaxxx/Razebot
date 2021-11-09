@@ -8,7 +8,7 @@ Default command is ">"
 Only currently working command is ">rc" a.k.a rank check
 Asks a few questions and produces a little embed with the rank and such
 
-![Screenshot](https://imgur.com/IBPfWjC)
+![Screenshot](https://i.imgur.com/IBPfWjC.png)
 
 
 <h3>Credit to all the projects I took from for this</h3>
