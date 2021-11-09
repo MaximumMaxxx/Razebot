@@ -1,7 +1,10 @@
-![Logo](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true?thumbnail)
+<p align="center">
+    <a href="https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png">
+        <img src="assets/Logo.png" alt="Logo" width="160" height="160">
+    </a>
+<h5 align="center"> Razebot</h5>
+</p>
 
-
-# Razebot
 A discord bot developed by MaximumMaxx#0001 for a small private discord server.
 Feel free to host the bot yourself if you want to use it. There are currently no plans to comericalize it.
 
