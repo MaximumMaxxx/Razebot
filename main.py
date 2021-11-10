@@ -1,10 +1,7 @@
 
 import time
 import discord
-from discord import embeds
-from discord.activity import CustomActivity
 from discord.ext import commands
-import random
 from mysql.connector import connect
 import requests
 import re
@@ -33,7 +30,6 @@ bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 @bot.event
 async def on_ready():
     await bot.change_presence(activity = discord.Activity(name=" Minecraft", type=1))
-
 
 def save_to_DB(user, username):
 
@@ -110,6 +106,7 @@ async def help(ctx,*arg):
 @bot.command()
 async def rc(ctx,*arg):  
     try:
+        arg = list(arg)
         # allows support for the original call setup
         if len(arg)== 0:
             # Input validation
@@ -126,14 +123,20 @@ async def rc(ctx,*arg):
             name = name.content
 
             # Weird Regex thing to split all non letters and numbers
-        elif len(arg) == 1:
-            name = arg[0]
-            region = settings["assumed region"]
-            
         else:
+            while not '#' in arg[0]:
+                arg[0] = arg[0] +" "+arg[1]
+                arg.pop(1)
+            if len(arg) == 1:
 
-            name= arg[0]
-            region = arg[1]
+                print(arg)
+                name = arg[0]
+                region = settings["assumed region"]
+            else:
+
+                print(arg)
+                name= arg[0]
+                region = arg[1]
             
             
         split = name.split('#')
