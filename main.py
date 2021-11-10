@@ -1,12 +1,11 @@
 
-import time
-import discord
-from discord.ext import commands
-from mysql.connector import connect
-import requests
-import re
-from PIL import ImageColor
-import logging
+import time # Error logging
+import discord # Discord Integration
+from discord.ext import commands # Commands for said discord integration
+from discord.utils import get
+import requests # Api Calls
+from PIL import ImageColor # Converting Hex to RGB
+import logging # Error Logging
 
 # The setting dictionary. Won't store across restarts but this is more meant for if you change the source code to have
 # an easy place to keep all the essential settings. Also this approach doesn't require SQL which was partly my goal.
@@ -21,7 +20,7 @@ if UseSQL == True:
     DB = mysql.connector.connect()
     print(DB)
 
-#Make 1 api call at the start since it doen't change basically ever anyways
+#Make 1 api call at the start since it doesn't change basically ever anyways
 
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
@@ -30,6 +29,7 @@ bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 @bot.event
 async def on_ready():
     await bot.change_presence(activity = discord.Activity(name=" Minecraft", type=1))
+
 
 def save_to_DB(user, username):
 
@@ -58,9 +58,6 @@ def save_to_DB(user, username):
         cursor.execute(sql)
         
         DB.commit()
-        
-
-
 
     else:
 
@@ -78,6 +75,26 @@ def save_to_DB(user, username):
         rslt = cursor.fetchall()
 
 
+def CacheRole():
+    # Gives users roles based on what accs they have saved
+    pass
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Commands
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+@bot.command()
+async def updaterole(ctx):
+    roleId = 904582610775322664
+    guild = ctx.message.guild
+    role = get(guild.roles,id=roleId)
+    await ctx.author.add_roles(role)
+
+@bot.command()
+async def myaccs(ctx,*arg):
+    # Take in args to modify and create account data 
+    pass
 
 
 @bot.command()
@@ -106,6 +123,7 @@ async def help(ctx,*arg):
 @bot.command()
 async def rc(ctx,*arg):  
     try:
+        cache = False
         arg = list(arg)
         # allows support for the original call setup
         if len(arg)== 0:
@@ -122,24 +140,34 @@ async def rc(ctx,*arg):
             name= await bot.wait_for("message", check=check, timeout=30)
             name = name.content
 
-            # Weird Regex thing to split all non letters and numbers
+            
         else:
-            while not '#' in arg[0]:
+            
+            if arg[0] == "cache":
+                # Do some stuff 
+                cache = True
+                pass
+            # Work around to allow the use of non-quoted spaced names
+            while not '#' in arg[0] and not cache:
                 arg[0] = arg[0] +" "+arg[1]
                 arg.pop(1)
-            if len(arg) == 1:
+            if len(arg) == 1 and not cache:
 
                 print(arg)
                 name = arg[0]
                 region = settings["assumed region"]
-            else:
-
+            elif not cache:
+                # Bassically an else statement just skips if chache 
                 print(arg)
                 name= arg[0]
                 region = arg[1]
             
-            
+        if cache:
+            # Get user input based on their cached results i.e request their most used/most recent item from the DB
+            pass  
+        
         split = name.split('#')
+        
         
         
 
