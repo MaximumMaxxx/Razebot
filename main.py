@@ -1,3 +1,4 @@
+
 import time
 import discord
 from discord import embeds
@@ -9,17 +10,22 @@ import re
 from PIL import ImageColor
 import logging
 
-# A very overkill solution to caching common usernames however, it works and is good SQL practice.
+# The setting dictionary. Won't store across restarts but this is more meant for if you change the source code to have
+# an easy place to keep all the essential settings. Also this approach doesn't require SQL which was partly my goal.
+settings = {"assumed region":"na","prefix":">"}
+
+# Command:[embed,ImageLink]
+help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","RC aka Rank Check", f"Takes in 0,1, or 2 parameters and searches the valorant api for them. If it finds a valid player it returns an with the player's rank and MMR. With one argument it takes in the Valorant name formatted like Name#Tag and pulls from the default region in settings. If no arguments are provided it prompts the user with questions instead. If you want to specify region you can either use 2 arguments like >rc Vname#tag region or no arguments"]}
 # Obviously only 
 UseSQL = False
 if UseSQL == True:
     import mysql.connector
-    DB = mysql.connector.connect("Your DB connection")
+    DB = mysql.connector.connect()
     print(DB)
 
-settings = {"assumed region":"na",}
 
-bot = commands.Bot(command_prefix='>')
+
+bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 
 def save_to_DB(user, username):
 
@@ -44,13 +50,28 @@ def save_to_DB(user, username):
         sql = f"UPDATE {user} SET {Result} quantity = 2"
 
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send('pong')
 
 @bot.command()
-async def rand(ctx):
-    await ctx.send(str(random.randint(0,100)))
+async def help(ctx,*arg):
+    # Getting the prefix here so that it can vary based on settings
+    prefix = settings["prefix"]
+    helps = help_menus
+    if len(arg) == 0:
+        # Return the default help menu
+        embed = discord.Embed(title = "General Help Settings",description = f"Current help menus: {prefix}help rc")
+        image = "https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true"
+    else:
+        if arg[0] in helps:
+            embed = discord.Embed(title = helps[arg[0]][1], description = helps[arg[0]][2], color = discord.Color.dark_green())
+            image = helps[arg[0]][0]
+        else:
+            image = "https://lh3.googleusercontent.com/proxy/_c_wrpevgis34jEBvd9uRPxYueZbavIRTtU9zNuZJ-FMRw-yo8XHX6n-tSeiJc7ZipzFB3snxw35LnIwCVrxku3cpoMAY1U"
+            embed =  embed = discord.Embed(title="Setting not found", description=f"{prefix}help for a general list of help menus" ,color=discord.Color.red())
+
+        # Return the specific help menu
+    embed.set_thumbnail(url=image)
+    await ctx.send(embed = embed)
+
 
 
 @bot.command()
@@ -158,4 +179,4 @@ async def rc(ctx,*arg):
         await ctx.send(embed = embed)
         print(logging.exception(''))
 
-bot.run('Bot Token')
+bot.run('')
