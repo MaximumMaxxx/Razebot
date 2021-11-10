@@ -2,6 +2,7 @@
 import time
 import discord
 from discord import embeds
+from discord.activity import CustomActivity
 from discord.ext import commands
 import random
 from mysql.connector import connect
@@ -17,37 +18,64 @@ settings = {"assumed region":"na","prefix":">"}
 # Command:[embed,ImageLink]
 help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","RC aka Rank Check", f"Takes in 0,1, or 2 parameters and searches the valorant api for them. If it finds a valid player it returns an with the player's rank and MMR. With one argument it takes in the Valorant name formatted like Name#Tag and pulls from the default region in settings. If no arguments are provided it prompts the user with questions instead. If you want to specify region you can either use 2 arguments like >rc Vname#tag region or no arguments"]}
 # Obviously only 
-UseSQL = False
+UseSQL = True
 if UseSQL == True:
     import mysql.connector
     DB = mysql.connector.connect()
     print(DB)
 
+#Make 1 api call at the start since it doen't change basically ever anyways
 
+CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
 bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 
 def save_to_DB(user, username):
 
-    print(user)
-    print(username)
 
     cursor = DB.cursor()
-    sql = f"CREATE TABLE IF NOT EXISTS {user} (id INT, username TEXT, quantity INT, ign VARCHAR(255))"
-    cursor.execut(sql)
-    sql = f"SELECT * FROM {user} WHERE text LIKE {username} LIMIT 1"
+    sql = f'''CREATE TABLE IF NOT EXISTS U{user} (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `quantity` INT NULL,
+    `ign` VARCHAR(255) NULL,
+    PRIMARY KEY (`id`));
+    '''
+    cursor.execute(sql)
+    sql = f"Select * from U{user} WHere ign like '{username}'"
+    
     cursor.execute(sql)
 
     Result = cursor.fetchall()
-    
-    print(Result)
+   
 
     if len(Result) == 0:
-        sql = f"INSERT INTO {user} (quantity, ign)"
-        values = (1,username)
-        cursor.execute(sql,values)
+        print("not in db")
+        #sql = f"INSERT INTO U{user} (quantity, ign) VALUES (%s,%s)"
+        #values = (1,username)
+
+        sql = f"INSERT INTO  U{user} (quantity, ign) VALUES (1,'{username}');"
+        cursor.execute(sql)
+        
+        DB.commit()
+        
+
+
+
     else:
-        sql = f"UPDATE {user} SET {Result} quantity = 2"
+
+        sql = f"Select * from U{user}"
+        cursor.execute(sql)
+        rslt = cursor.fetchall()
+        count = rslt[0][1]
+        count += 1
+        sql = f"UPDATE U{user} SET quantity = {count} where ign like '{username}';"
+        cursor.execute(sql)
+        DB.commit()
+
+        sql = f"Select * from U{user}"
+        cursor.execute(sql)
+        rslt = cursor.fetchall()
+
 
 
 
@@ -98,7 +126,7 @@ async def rc(ctx,*arg):
             region = settings["assumed region"]
             
         else:
-            print("2 args")
+
             name= arg[0]
             region = arg[1]
             
@@ -108,7 +136,7 @@ async def rc(ctx,*arg):
         
 
         # Api calls, using formatted strings
-        CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
+
         MMR= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
 
         # Some default values in case a 200 isn't recieved
