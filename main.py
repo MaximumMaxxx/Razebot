@@ -30,6 +30,11 @@ CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
 bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 
+@bot.event
+async def on_ready():
+    await bot.change_presence(activity = discord.Activity(name=" Minecraft", type=1))
+
+
 def save_to_DB(user, username):
 
 
