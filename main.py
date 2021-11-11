@@ -1,6 +1,9 @@
 
+from asyncio.tasks import current_task
 import time # Error logging
-import discord # Discord Integration
+import discord
+from discord import message
+from discord import embeds # Discord Integration
 from discord.ext import commands # Commands for said discord integration
 from discord.utils import get
 import requests # Api Calls
@@ -19,6 +22,7 @@ if UseSQL == True:
     import mysql.connector
     DB = mysql.connector.connect()
     print(DB)
+    cursor = DB.cursor()
 
 #Make 1 api call at the start since it doesn't change basically ever anyways
 
@@ -28,60 +32,67 @@ bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity = discord.Activity(name=" Minecraft", type=1))
+    await bot.change_presence(activity = discord.Activity(name=">help", type=2))
 
 
-def save_to_DB(user, username):
+def Create_TB(user,type):
+    # S signifies a saved accounts table. M signifys a Myaccounts table
 
 
-    cursor = DB.cursor()
-    sql = f'''CREATE TABLE IF NOT EXISTS U{user} (
+    sql = f'''CREATE TABLE IF NOT EXISTS {type}{user} (
     `id` INT NOT NULL AUTO_INCREMENT,
-    `quantity` INT NULL,
+    `note` VARCHAR(255) NULL,
     `ign` VARCHAR(255) NULL,
     PRIMARY KEY (`id`));
     '''
     cursor.execute(sql)
-    sql = f"Select * from U{user} WHere ign like '{username}'"
-    
+
+def AddTo_TB(user, type, ign, note):
+    # S signifies a saved accounts table. M signifys a Myaccounts table
+
+    sql = f'''select * from {type}{user} where ign like '{ign}';'''
     cursor.execute(sql)
-
-    Result = cursor.fetchall()
-   
-
-    if len(Result) == 0:
-        print("not in db")
-        #sql = f"INSERT INTO U{user} (quantity, ign) VALUES (%s,%s)"
-        #values = (1,username)
-
-        sql = f"INSERT INTO  U{user} (quantity, ign) VALUES (1,'{username}');"
-        cursor.execute(sql)
-        
+    RSLT = cursor.fetchall()
+    if len(RSLT) != 0:
+        return("Name Already In Database")
+    else:
+        # Name is not in the database
+        sql = f'''INSERT INTO {type}{user} (note,ign) VALUES (%s,%s)'''
+        values = (note,ign)
+        cursor.execute(sql,values)
         DB.commit()
+        return("sucess")
+
+def RmFrom_TB(user, type, ign):
+    # S signifies a saved accounts table. M signifys a Myaccounts table
+
+    sql = f'''select * from {type}{user} where ign like '{ign}';'''
+    cursor.execute(sql)
+    RSLT = cursor.fetchall()
+    if len(RSLT) != 0:
+        # Name is not in the database
+        sql = f'''DELETE FROM {type}{user} WHERE ign like '{ign}' '''
+        cursor.execute(sql)
+        DB.commit()
+        return("sucess")
 
     else:
-
-        sql = f"Select * from U{user}"
-        cursor.execute(sql)
-        rslt = cursor.fetchall()
-        count = rslt[0][1]
-        count += 1
-        sql = f"UPDATE U{user} SET quantity = {count} where ign like '{username}';"
-        cursor.execute(sql)
-        DB.commit()
-
-        sql = f"Select * from U{user}"
-        cursor.execute(sql)
-        rslt = cursor.fetchall()
+        return("Name not In Database")
 
 
-def CacheRole():
-    # Gives users roles based on what accs they have saved
+
+        
+
+
+
+def UpdateRole():
+    # Gives users a role based on what accs they have saved
     pass
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Commands
 # ----------------------------------------------------------------------------------------------------------------------
+
 
 
 @bot.command()
@@ -91,10 +102,82 @@ async def updaterole(ctx):
     role = get(guild.roles,id=roleId)
     await ctx.author.add_roles(role)
 
+
+
 @bot.command()
 async def myaccs(ctx,*arg):
-    # Take in args to modify and create account data 
-    pass
+    if UseSQL == True:
+        # Take in args to modify and create saved data for the User's account
+        
+        # Create table for the user that called the command 
+        Create_TB(ctx.message.author.id,"M")
+
+        if len(arg) == 0:
+            # return an embed with a of their accounts
+            sql = f"select * from M{ctx.message.author.id}"
+            cursor.execute(sql)
+            Result = cursor.fetchall()
+            print(Result)
+
+            if len(Result) == 0:
+                Output = "You have no accounts us '>myaccs add User#tag note' to add your account(s)"
+            else:
+                Output = "display"
+                embed=discord.Embed(title="Your Accounts", color=discord.Color.dark_red())
+                for i in range(len(Result)):
+                    embed.add_field(name=Result[i][2],value=Result[i][1])
+
+        else:
+            # Atleast one argument passed in
+
+            # In Case of a name with a space(s) compress it so that everything still works fine
+            while not '#' in arg[1]:
+                arg[1] = arg[1] +" "+arg[2]
+                arg.pop(2)
+
+
+            if arg[0] == "add":
+                # Take all data after and add to myaccs db
+                Output = AddTo_TB(ctx.message.author.id,"M",arg[1],arg[2])
+            elif arg[0] == "del":
+                # Delete the specified account for the db
+                Output = RmFrom_TB(ctx.message.author.id,"M",arg[1])
+            else:
+                # Invalid arguement
+                Output = "Invalid argument us >help for help"
+        
+        if Output =="sucess":
+            embed=discord.Embed(title="Sucess", description="Operation Completed Sucessfully", color=discord.Color.green())
+        elif Output !="display":
+            embed=discord.Embed(title="ERROR", description=Output, color=discord.Color.red())
+    else:
+        embed=discord.Embed(title="ERROR", description="Please Setup and enable a SQL server to use this feature", color=discord.Color.red())
+    await ctx.send(embed=embed)
+        
+
+
+
+@bot.command()
+async def quickaccs(ctx,*arg):
+    # Take in args to modify and create saved account data 
+
+    # Create table for the user that called the command 
+    Create_TB(ctx.message.author.id,"S")
+
+    if len(arg) == 0:
+        # Return embed with the list of accounts that they have saved
+        pass
+    else:
+        # They passed in atleast one argument
+        if arg[0] == "del":
+            # Delete the username after that from their database
+            pass
+        elif arg[0] == "add":
+            # Add the username after type to database
+            pass
+        else:
+            # Return error embed
+            pass
 
 
 @bot.command()
@@ -231,9 +314,6 @@ async def rc(ctx,*arg):
         item.set_footer(text="Razebot by MaximumMaxx")
         await ctx.send(embed = item)
         # Upon successful completion aka getting the embed output
-
-        if UseSQL == True:
-            save_to_DB(ctx.author.id,name)
 
     except TimeoutError:
         embed = discord.Embed(title="Timeout, took too long", description=f"A 30 second timeout ran out." ,color=discord.Color.red())
