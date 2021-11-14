@@ -140,7 +140,8 @@ async def updaterole(ctx):
             print(logging.exception(''))
 
     else:
-        embed=discord.Embed(title="ERROR", description="Please setup, connect, and enable a SQL database to use this feature", color=discord.Color.red())    
+        embed=discord.Embed(title="ERROR", description="Please setup, connect, and enable a SQL database to use this feature", color=discord.Color.red())
+    embed.set_footer(text="Razebot by MaximumMaxx")    
     await ctx.send(embed=embed)
 
 
@@ -204,6 +205,7 @@ async def myaccs(ctx,*arg):
             print(logging.exception(''))
     else:
         embed=discord.Embed(title="ERROR", description="Please Setup and enable a SQL server to use this feature", color=discord.Color.red())
+    embed.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed=embed)
 
 
@@ -266,6 +268,7 @@ async def quickaccs(ctx,*arg):
             embed=discord.Embed(title="ERROR", description="Something broke lol get rekt", color=discord.Color.red())
     else:
         embed=discord.Embed(title="ERROR", description="Please Setup and enable a SQL server to use this feature", color=discord.Color.red())
+    embed.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed=embed)
 
 @bot.command()
@@ -287,6 +290,7 @@ async def help(ctx,*arg):
  
         # Return the specific help menu
     embed.set_thumbnail(url=image)
+    embed.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = embed)
 
 @bot.command()
@@ -312,11 +316,12 @@ async def rc(ctx,*arg):
                     
                     def check(msg):
                         return msg.author == ctx.author and msg.channel == ctx.channel
- 
+                    
                     await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
                     embed=discord.Embed(title="Your Quick Accounts", color=discord.Color.dark_red())
                     for i in range(len(Result)):
                         embed.add_field(name=f"{i+1}) {Result[i][2]}",value=Result[i][1])
+                    embed.set_footer(text="Razebot by MaximumMaxx")
                     await ctx.send(embed=embed)
                     acc = await bot.wait_for("message", check=check, timeout=30)
                     if acc.content =="Cancel":
