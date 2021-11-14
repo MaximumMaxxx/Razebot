@@ -17,6 +17,7 @@ Additionally it'll probably work on Windows but I can't guarentee it.
 - Dynamic embeds
 
 Rank check example
+
 ![Rank Checking](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/razebot%20sample%20output.png?raw=true)
 
 
