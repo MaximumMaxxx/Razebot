@@ -10,10 +10,10 @@ This bot requires Python 3.4+ to function. This is due to Discord.py.
 Additionally it'll probably work on Windows but I can't guarentee it.
 
 <h3>Features</h3>
-Default command is ">"
 
-Only currently working command is ">rc" a.k.a rank check
-Asks a few questions and produces a little embed with the rank and such
+- Automatic role assignment
+- Fully integrated rank checking
+- Saves all user data to SQL database
 
 ![Screenshot](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/razebot%20sample%20output.png?raw=true)
 
