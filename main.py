@@ -41,8 +41,6 @@ async def on_ready():
 
 def Create_TB(user,type):
     # S signifies a saved accounts table. M signifys a Myaccounts table
-
-
     sql = f'''CREATE TABLE IF NOT EXISTS {type}{user} (
     `id` INT NOT NULL AUTO_INCREMENT,
     `note` VARCHAR(255) NULL,
@@ -53,7 +51,6 @@ def Create_TB(user,type):
 
 def AddTo_TB(user, type, ign, note):
     # S signifies a saved accounts table. M signifys a Myaccounts table
- 
     sql = f'''select * from {type}{user} where ign like '{ign}';'''
     cursor.execute(sql)
     RSLT = cursor.fetchall()
@@ -69,7 +66,6 @@ def AddTo_TB(user, type, ign, note):
  
 def RmFrom_TB(user, type, ign):
     # S signifies a saved accounts table. M signifys a Myaccounts table
- 
     sql = f'''select * from {type}{user} where ign like '{ign}';'''
     cursor.execute(sql)
     RSLT = cursor.fetchall()
@@ -101,7 +97,6 @@ async def updaterole(ctx):
             await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["diamond"]))
             await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["immortal"]))
             await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["radiant"]))
-    
     
             sql = f"select * from M{ctx.message.author.id}"
             cursor.execute(sql)
@@ -356,30 +351,35 @@ async def rc(ctx,*arg):
         else:
             # return an embed with a of their accounts
             if "<" in arg[0]:
+                # Pinging Someone
+                # Removeing all the special characters to isolate the uuid of the ping
                 to_rem = ["<",">","!","@"]
                 arg = list(arg)
                 for i in to_rem:
                     arg[0] = arg[0].replace(i,'')
-                await ctx.send(arg[0])
                 
+                # Getting the accounts owned by that uuid
                 sql = f"select * from M{arg[0]}"
                 cursor.execute(sql)
                 Result = cursor.fetchall()
                 print(Result)
                 
-                item =discord.Embed(title=f"{arg[0]}'s accounts", color=discord.Color.dark_red())
-                for i in range(len(Result)):
-                    item.add_field(name=f"{i+1}). {Result[i][2]}",value=Result[i][1])
+                # Possibly working line of code to get the uname of the 
+                user = bot.get_user(arg[0])
 
+                # User input validation
                 def check(msg):
                     return msg.author == ctx.author and msg.channel == ctx.channel
                 
+                # Embed for the pinged person's accounts
                 await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
-                embed=discord.Embed(title=f"{arg[0]}'s accounts", color=discord.Color.dark_red())
+                embed=discord.Embed(title=f"{user}'s accounts", color=discord.Color.dark_red())
                 for i in range(len(Result)):
                     embed.add_field(name=f"{i+1}) {Result[i][2]}",value=Result[i][1])
                 embed.set_footer(text="Razebot by MaximumMaxx")
                 await ctx.send(embed=embed)
+                
+                # User input
                 acc = await bot.wait_for("message", check=check, timeout=30)
                 if acc.content =="Cancel":
                     Preembed = True
