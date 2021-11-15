@@ -25,6 +25,7 @@ if UseSQL == True:
     import mysql.connector
     # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
     DB = mysql.connector.connect()
+
     print(DB)
     cursor = DB.cursor()
 
@@ -353,21 +354,59 @@ async def rc(ctx,*arg):
  
             
         else:
- 
-            # Work around to allow the use of non-quoted spaced names
-            while not '#' in arg[0]:
-                arg[0] = arg[0] +" "+arg[1]
-                arg.pop(1)
-            if len(arg) == 1:
- 
-                print(arg)
-                name = arg[0]
-                region = settings["assumed region"]
+            # return an embed with a of their accounts
+            if "<" in arg[0]:
+                to_rem = ["<",">","!","@"]
+                arg = list(arg)
+                for i in to_rem:
+                    arg[0] = arg[0].replace(i,'')
+                await ctx.send(arg[0])
+                
+                sql = f"select * from M{arg[0]}"
+                cursor.execute(sql)
+                Result = cursor.fetchall()
+                print(Result)
+                
+                item =discord.Embed(title=f"{arg[0]}'s accounts", color=discord.Color.dark_red())
+                for i in range(len(Result)):
+                    item.add_field(name=f"{i+1}). {Result[i][2]}",value=Result[i][1])
+
+                def check(msg):
+                    return msg.author == ctx.author and msg.channel == ctx.channel
+                
+                await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
+                embed=discord.Embed(title=f"{arg[0]}'s accounts", color=discord.Color.dark_red())
+                for i in range(len(Result)):
+                    embed.add_field(name=f"{i+1}) {Result[i][2]}",value=Result[i][1])
+                embed.set_footer(text="Razebot by MaximumMaxx")
+                await ctx.send(embed=embed)
+                acc = await bot.wait_for("message", check=check, timeout=30)
+                if acc.content =="Cancel":
+                    Preembed = True
+                    item = discord.Embed(title="Operation Cancelled" ,color=discord.Color.green())
+                elif len(Result) < int(acc.content) -1 or int(acc.content)<= 0:
+                    Preembed = True
+                    item = discord.Embed(title="Invalid account number" ,color=discord.Color.red())
+                else:
+                    # Account number should be valid here
+                    name = Result[int(acc.content)-1][2]
+                    region = settings["assumed region"]
+
             else:
-                # Bassically an else statement just skips if chache 
-                print(arg)
-                name= arg[0]
-                region = arg[1]
+                # Work around to allow the use of non-quoted spaced names
+                while not '#' in arg[0]:
+                    arg[0] = arg[0] +" "+arg[1]
+                    arg.pop(1)
+                if len(arg) == 1:
+    
+                    print(arg)
+                    name = arg[0]
+                    region = settings["assumed region"]
+                else:
+                    # Bassically an else statement just skips if chache 
+                    print(arg)
+                    name= arg[0]
+                    region = arg[1]
             
         # Skip all the api calls if there isn't anything in quickaccs
         if not Preembed:
