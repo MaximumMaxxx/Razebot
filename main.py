@@ -300,9 +300,13 @@ async def rc(ctx,*arg):
         if len(arg)== 0:
             if UseSQL == True:
                 # If SQL is enabled pull a list of accounts from Quickaccs
-                sql = f"SELECT * FROM S{ctx.message.author.id}"
-                cursor.execute(sql)
-                Result = cursor.fetchall()
+                try:
+                    sql = f"SELECT * FROM S{ctx.message.author.id}"
+                    cursor.execute(sql)
+                    Result = cursor.fetchall()
+                except:
+                    item = discord.Embed(title="No accounts in quickaccs", description=f"Use >help quickaccs for more info" ,color=discord.Color.red())
+                    Preembed = True
  
                 if len(Result) == 0:
                     # Not Quick accounts
