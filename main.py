@@ -15,9 +15,8 @@ help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_C
 "quickaccs":["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png","Quick Accounts",f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
 "myaccs":["https://pngimg.com/uploads/smurf/smurf_PNG34.png","My accounts",f"A command to interact with a database of saved quick accounts. My accounts is used to manage a list of accounts you own. Syntax: All uses start with >myaccs followed by something. To view a list of your saved accounts use '>myaccs'. To add an account use '>muaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>myaccs del Name#tag' Again nothing special has to happen if the name has spaces"]}# Obviously only 
 
-
+# Modify the second item in each set with the name of the role. Ex: unranked role called "Cringe" "unranked":"Unranked" -> "unranked":"Cringe"
 role_names= {"unranked":"Unranked","iron":"⁎ Iron ⁎","bronze":"⁑ Bronze ⁑","silver":"✼ Silver ✼","gold":"Gold","platnium":"Platinum","diamond":"Diamond","immortal":"Immortal","radiant":"Radiant"}
-
 
 # Obviously only enable SQL if you have a database setup
 UseSQL = True
@@ -32,6 +31,7 @@ if UseSQL == True:
 #Make 1 api call at the start since it doesn't change basically ever anyways
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
+# initialize the bot
 bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 
 @bot.event
@@ -277,14 +277,16 @@ async def help(ctx,*arg):
         embed = discord.Embed(title = "List of help menus",description = f"Current help menus: {prefix}help rc, {prefix}help myaccs, {prefix}help quickaccs")
         image = "https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true"
     else:
+        # Return the specified help menu
         if arg[0] in helps:
             embed = discord.Embed(title = helps[arg[0]][1], description = helps[arg[0]][2], color = discord.Color.dark_green())
             image = helps[arg[0]][0]
         else:
+            # Invalid help menu
             image = "https://lh3.googleusercontent.com/proxy/_c_wrpevgis34jEBvd9uRPxYueZbavIRTtU9zNuZJ-FMRw-yo8XHX6n-tSeiJc7ZipzFB3snxw35LnIwCVrxku3cpoMAY1U"
             embed =  embed = discord.Embed(title="Setting not found", description=f"{prefix}help for a general list of help menus" ,color=discord.Color.red())
  
-        # Return the specific help menu
+    # return the help menu
     embed.set_thumbnail(url=image)
     embed.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = embed)
@@ -303,22 +305,24 @@ async def rc(ctx,*arg):
                 Result = cursor.fetchall()
  
                 if len(Result) == 0:
+                    # Not Quick accounts
                     item = discord.Embed(title="No accounts in quickaccs", description=f"Use >help quickaccs for more info" ,color=discord.Color.red())
                     Preembed = True
                 else:
+                    # Atleast 1 quick account
+                    
+                    # Generating the embed with counting starting from 1
                     item =discord.Embed(title="Your Quick Accounts", color=discord.Color.dark_red())
                     for i in range(len(Result)):
                         item.add_field(name=f"{i+1}). {Result[i][2]}",value=Result[i][1])
                     
+                    # User input validation
                     def check(msg):
                         return msg.author == ctx.author and msg.channel == ctx.channel
                     
+                    # User input
                     await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
-                    embed=discord.Embed(title="Your Quick Accounts", color=discord.Color.dark_red())
-                    for i in range(len(Result)):
-                        embed.add_field(name=f"{i+1}) {Result[i][2]}",value=Result[i][1])
-                    embed.set_footer(text="Razebot by MaximumMaxx")
-                    await ctx.send(embed=embed)
+                    await ctx.send(embed=item)
                     acc = await bot.wait_for("message", check=check, timeout=30)
                     if acc.content =="Cancel":
                         Preembed = True
@@ -349,7 +353,7 @@ async def rc(ctx,*arg):
  
             
         else:
-            # return an embed with a of their accounts
+            # return an embed with a list of their accounts
             if "<" in arg[0]:
                 # Pinging Someone
                 # Removeing all the special characters to isolate the uuid of the ping
@@ -402,8 +406,7 @@ async def rc(ctx,*arg):
                     print(arg)
                     name = arg[0]
                     region = settings["assumed region"]
-                else:
-                    # Bassically an else statement just skips if chache 
+                else: 
                     print(arg)
                     name= arg[0]
                     region = arg[1]
@@ -448,8 +451,6 @@ async def rc(ctx,*arg):
                         f.write(f"Error in rc function {MMR.status_code} | {time.ctime(time.time())} | {region}/{split[0]}/{split[1]} | {MMR.json()} \n")
                 EMB_color = discord.Color.red()
                 default_color = True
-                
-                # Convert the hex colors to rgb
             
             # if default_color is true then we don't need to convert from hex to rgb
             if default_color == False:
