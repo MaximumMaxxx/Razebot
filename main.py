@@ -120,6 +120,10 @@ async def updaterole(ctx):
                     MMR= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
                     if MMR.status_code != 200:
                         continue
+                    elif MMR.status_code == 429:
+                        embed = discord.Embed(title="Error", description="Rate limited please wait a few minutes and try again. If the issue persists contact a moderator.", color=discord.Color.red())
+                        max_rank[0] == -2
+                        break
                     MMR_json = MMR.json()
                     rank=MMR_json["data"]["currenttierpatched"]
                     if MMR_json["data"]["currenttier"] > max_rank[0]:
@@ -129,7 +133,8 @@ async def updaterole(ctx):
                 if max_rank[0] == -1:
                     rank_split = "unranked"
                     embed = discord.Embed(title="Warning", description="You have no valid accounts in the database. us >help myaccs for more info on adding accounts. You have been given unranked for now", color=discord.Color.gold())
-                else:
+                # Making sure it doesn't overwrite the embed generated above
+                elif max_rank[0] != -2:
                     embed = discord.Embed(title="Sucess", description=f"You have been granted the role {rank_split} feel free to add any other accounts you may have and run this command again.", color=discord.Color.green())
             else:
                 # They don't have anything in the database
