@@ -13,9 +13,10 @@ settings = {"assumed region":"na","prefix":">"}
 # Command:[embed,ImageLink]
 help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","RC aka Rank Check", f"Takes in 0,1, or 2 parameters and searches the valorant api for a player's stats. If it finds a valid player it returns an with the player's rank and MMR. With one argument it takes in the Valorant name formatted like Name#Tag and pulls from the default region in settings. If no arguments are provided it prompts the user with questions instead. If you want to specify region you can either use 2 arguments like >rc Vname#tag region or no arguments"],
 "quickaccs":["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png","Quick Accounts",f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
-"myaccs":["https://pngimg.com/uploads/smurf/smurf_PNG34.png","My accounts",f"A command to interact with a database of saved quick accounts. My accounts is used to manage a list of accounts you own. Syntax: All uses start with >myaccs followed by something. To view a list of your saved accounts use '>myaccs'. To add an account use '>muaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>myaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
-"roles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005",">updaterole",f"A command to automatically update your role based on what accounts you have linked to >myaccs."] 
-}# Obviously only 
+"myaccs":["https://pngimg.com/uploads/smurf/smurf_PNG34.png","My accounts",f"A command to interact with a database of saved quick accounts. My accounts is used to manage a list of accounts you own. Syntax: All uses start with >myaccs followed by something. To view a list of your saved accounts use '>myaccs'. To add an account use '>myaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>myaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
+"roles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005",">updaterole",f"A command to automatically update your role based on what accounts you have linked to >myaccs."],
+"quick vs myaccs":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Quick accounts Vs My Accounts",f"The distinction between quickaccs and myaccs is a small but important one. myaccs is a list of all accounts you personally own. myaccs is thus pulled from in a situation where you are the subject, the prime examples of these are rank updating, and when you're pinged for a rank check. constrasting that is quickaccs. quickaccs is a list of accounts you want to check without having to memorize tags, this might be a friend's account, or it might be a youtuber's account. You can put whatever accounts you want in quickaccs and it won't affect anything"]
+}
 
 # Modify the second item in each set with the name of the role. Ex: unranked role called "Cringe" "unranked":"Unranked" -> "unranked":"Cringe"
 role_names= {"unranked":"Unranked","iron":"⁎ Iron ⁎","bronze":"⁑ Bronze ⁑","silver":"✼ Silver ✼","gold":"Gold","platnium":"Platinum","diamond":"Diamond","immortal":"Immortal","radiant":"Radiant"}
@@ -80,6 +81,13 @@ def RmFrom_TB(user, type, ign):
  
     else:
         return("Name not In Database")
+
+def compressnote(arg):
+    list(arg)
+
+
+def compressname(arg):
+    list(arg)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Commands
@@ -167,29 +175,40 @@ async def myaccs(ctx,*arg):
                     embed=discord.Embed(title="Your Accounts", color=discord.Color.dark_red())
                     for i in range(len(Result)):
                         embed.add_field(name=Result[i][2],value=Result[i][1])
- 
+
+            elif len(arg) == 1:
+                # Only 1 perameter was passed in so it won't do anything except error
+                embed=discord.Embed(title="Error", description = "Invalid argument count. Use '>help myaccs' for more info",color=discord.Color.red())
+
             else:
-                # Atleast one argument passed in
- 
-                # In Case of a name with a space(s) compress it so that everything still works fine
-                while not '#' in arg[1]:
-                    arg[1] = arg[1] +" "+arg[2]
-                    arg.pop(2)
-                
-                # Compress the note into arg[3] so you don't have to use quotes
-                while len(arg) > 3:
-                    arg[2] = arg[2] +" "+arg[3]
-                    arg.pop(3)
- 
- 
+                # Atleast two arguments passed in
                 if arg[0] == "add":
+                    # This is not super clean code but functions were being weird so I can't do that solution
+                    while not '#' in arg[1]:
+                        arg[1] = arg[1] +" "+arg[2]
+                        arg.pop(2)
+
+                    while len(arg) > 3:
+                        arg[2] = arg[2] +" "+arg[3]
+                        arg.pop(3)
+
                     if len(arg) == 2:
                         arg.append("No note")
  
                     Output = AddTo_TB(ctx.message.author.id,"M",arg[1],arg[2])
                 elif arg[0] == "del":
+
+                    while not '#' in arg[1]:
+                        arg[1] = arg[1] +" "+arg[2]
+                        arg.pop(2)
+
+                    while len(arg) > 3:
+                        arg[2] = arg[2] +" "+arg[3]
+                        arg.pop(3)
+
                     # Delete the specified account for the db
                     Output = RmFrom_TB(ctx.message.author.id,"M",arg[1])
+
                 else:
                     # Invalid arguement
                     Output = "Invalid argument us >help for help"
@@ -235,23 +254,26 @@ async def quickaccs(ctx,*arg):
             else:
                 # Atleast one argument passed in
  
-                # In Case of a name with a space(s) compress it so that everything still works fine
-                while not '#' in arg[1]:
-                    arg[1] = arg[1] +" "+arg[2]
-                    arg.pop(2)
- 
-                # Compress the note into arg[3] so you don't have to use quotes
-                while len(arg) > 3:
-                    arg[2] = arg[2] +" "+arg[3]
-                    arg.pop(3)
- 
                 if arg[0] == "add":
+                    while not '#' in arg[1]:
+                        arg[1] = arg[1] +" "+arg[2]
+                        arg.pop(2)
+
+                    while len(arg) > 3:
+                        arg[2] = arg[2] +" "+arg[3]
+                        arg.pop(3)
                     # Take all data after and add to myaccs db
-                    if arg[0] == "add":
-                        if len(arg) == 2:
-                            arg.append("No note")
+                    if len(arg) == 2:
+                        arg.append("No note")
                     Output = AddTo_TB(ctx.message.author.id,"S",arg[1],arg[2])
                 elif arg[0] == "del":
+                    while not '#' in arg[1]:
+                        arg[1] = arg[1] +" "+arg[2]
+                        arg.pop(2)
+
+                    while len(arg) > 3:
+                        arg[2] = arg[2] +" "+arg[3]
+                        arg.pop(3)
                     # Delete the specified account for the db
                     Output = RmFrom_TB(ctx.message.author.id,"S",arg[1])
                 else:
@@ -264,14 +286,21 @@ async def quickaccs(ctx,*arg):
                 embed=discord.Embed(title="ERROR", description=Output, color=discord.Color.red())
         except:
             embed=discord.Embed(title="ERROR", description="Something broke lol get rekt", color=discord.Color.red())
+            print(logging.exception(''))
     else:
         embed=discord.Embed(title="ERROR", description="Please Setup and enable a SQL server to use this feature", color=discord.Color.red())
+
     embed.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed=embed)
 
 @bot.command()
 async def help(ctx,*arg):
     # Getting the prefix here so that it can vary based on settings
+        # Compress the note into arg[3] so you don't have to use quotes
+    while len(arg) > 2:
+        arg[1] = arg[1] +" "+arg[2]
+        arg.pop(1)
+    
     prefix = settings["prefix"]
     helps = help_menus
     if len(arg) == 0:
@@ -295,6 +324,9 @@ async def help(ctx,*arg):
 
 @bot.command()
 async def rc(ctx,*arg):  
+    # Welcome to If hell, how may I take your order?
+    # Yeah I'll take sketchy code with a side of uncertinty and maybe an 5L unneccesary variable to drink
+    # Alright, coming right up:  
     try:
         Preembed = False
         arg = list(arg)
@@ -306,40 +338,45 @@ async def rc(ctx,*arg):
                     sql = f"SELECT * FROM S{ctx.message.author.id}"
                     cursor.execute(sql)
                     Result = cursor.fetchall()
+                    try_succeed = True
                 except:
                     item = discord.Embed(title="No accounts in quickaccs", description=f"Use >help quickaccs for more info" ,color=discord.Color.red())
                     Preembed = True
- 
-                if len(Result) == 0:
-                    # Not Quick accounts
-                    item = discord.Embed(title="No accounts in quickaccs", description=f"Use >help quickaccs for more info" ,color=discord.Color.red())
-                    Preembed = True
-                else:
-                    # Atleast 1 quick account
-                    
-                    # Generating the embed with counting starting from 1
-                    item =discord.Embed(title="Your Quick Accounts", color=discord.Color.dark_red())
-                    for i in range(len(Result)):
-                        item.add_field(name=f"{i+1}). {Result[i][2]}",value=Result[i][1])
-                    
-                    # User input validation
-                    def check(msg):
-                        return msg.author == ctx.author and msg.channel == ctx.channel
-                    
-                    # User input
-                    await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
-                    await ctx.send(embed=item)
-                    acc = await bot.wait_for("message", check=check, timeout=30)
-                    if acc.content =="Cancel":
+                # know this is a stupid way to implement this but I also don't care enough to fix it.
+                # There's a tiny bit of logic becuase I want that try to just effect that SQL statement 
+                # But there's still absolutely a cleaner way to do it. 
+                if try_succeed:
+
+                    if len(Result) == 0:
+                        # Not Quick accounts
+                        item = discord.Embed(title="No accounts in quickaccs", description=f"Use >help quickaccs for more info" ,color=discord.Color.red())
                         Preembed = True
-                        item = discord.Embed(title="Operation Cancelled" ,color=discord.Color.green())
-                    elif len(Result) < int(acc.content) -1 or int(acc.content)<= 0:
-                        Preembed = True
-                        item = discord.Embed(title="Invalid account number" ,color=discord.Color.red())
                     else:
-                        # Account number should be valid here
-                        name = Result[int(acc.content)-1][2]
-                        region = settings["assumed region"]
+                        # Atleast 1 quick account
+                        
+                        # Generating the embed with counting starting from 1
+                        item =discord.Embed(title="Your Quick Accounts", color=discord.Color.dark_red())
+                        for i in range(len(Result)):
+                            item.add_field(name=f"{i+1}). {Result[i][2]}",value=Result[i][1])
+                        
+                        # User input validation
+                        def check(msg):
+                            return msg.author == ctx.author and msg.channel == ctx.channel
+                        
+                        # User input
+                        await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
+                        await ctx.send(embed=item)
+                        acc = await bot.wait_for("message", check=check, timeout=30)
+                        if acc.content =="Cancel":
+                            Preembed = True
+                            item = discord.Embed(title="Operation Cancelled" ,color=discord.Color.green())
+                        elif len(Result) < int(acc.content) -1 or int(acc.content)<= 0:
+                            Preembed = True
+                            item = discord.Embed(title="Invalid account number" ,color=discord.Color.red())
+                        else:
+                            # Account number should be valid here
+                            name = Result[int(acc.content)-1][2]
+                            region = settings["assumed region"]
  
             else:
                 # Just uses the legacy rank checking system with message and response if SQL isn't enabled
