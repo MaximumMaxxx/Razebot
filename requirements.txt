@@ -1,0 +1,4 @@
+discord.py==1.7.3
+Pillow>=8.4.0
+requests>=2.26.0
+mysql-connector-pyton==8.0.27
