@@ -27,7 +27,6 @@ if UseSQL == True:
     import mysql.connector
     # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
     DB = mysql.connector.connect()
-
     print(DB)
     cursor = DB.cursor()
 
@@ -333,6 +332,7 @@ async def rc(ctx,*arg):
         # allows support for the original call setup
         if len(arg)== 0:
             if UseSQL == True:
+                try_succeed = False
                 # If SQL is enabled pull a list of accounts from Quickaccs
                 try:
                     sql = f"SELECT * FROM S{ctx.message.author.id}"
@@ -375,7 +375,7 @@ async def rc(ctx,*arg):
                             item = discord.Embed(title="Invalid account number" ,color=discord.Color.red())
                         else:
                             # Account number should be valid here
-                            name = Result[int(acc.content)-1][2]
+                            name = Result[int(acc.content)-1][2]>updaterole
                             region = settings["assumed region"]
  
             else:
@@ -411,8 +411,11 @@ async def rc(ctx,*arg):
                 Result = cursor.fetchall()
                 print(Result)
                 
-                # Possibly working line of code to get the uname of the 
-                user = bot.get_user(arg[0])
+                print(arg[0])
+                # https://www.reddit.com/r/Discord_Bots/comments/quyrbk/get_username_from_uuid/
+                user = await bot.fetch_user(arg[0])
+
+                username = user.name
 
                 # User input validation
                 def check(msg):
@@ -420,7 +423,7 @@ async def rc(ctx,*arg):
                 
                 # Embed for the pinged person's accounts
                 await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
-                embed=discord.Embed(title=f"{user}'s accounts", color=discord.Color.dark_red())
+                embed=discord.Embed(title=f"{username}'s accounts", color=discord.Color.dark_red())
                 for i in range(len(Result)):
                     embed.add_field(name=f"{i+1}) {Result[i][2]}",value=Result[i][1])
                 embed.set_footer(text="Razebot by MaximumMaxx")
