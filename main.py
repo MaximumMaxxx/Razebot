@@ -5,6 +5,7 @@ from discord.utils import get # Used for rank assignment
 import requests # Api Calls
 from PIL import ImageColor # Converting Hex to RGB
 import logging # Error Logging
+from asyncio import exceptions # Should already be included with discord.py
 
 # The setting dictionary. Won't store across restarts but this is more meant for if you change the source code to have
 # an easy place to keep all the essential settings. Also this approach doesn't require SQL which was partly my goal.
@@ -120,10 +121,6 @@ async def updaterole(ctx):
                     MMR= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
                     if MMR.status_code != 200:
                         continue
-                    elif MMR.status_code == 429:
-                        embed = discord.Embed(title="Error", description="Rate limited please wait a few minutes and try again. If the issue persists contact a moderator.", color=discord.Color.red())
-                        max_rank[0] == -2
-                        break
                     MMR_json = MMR.json()
                     rank=MMR_json["data"]["currenttierpatched"]
                     if MMR_json["data"]["currenttier"] > max_rank[0]:
@@ -133,8 +130,7 @@ async def updaterole(ctx):
                 if max_rank[0] == -1:
                     rank_split = "unranked"
                     embed = discord.Embed(title="Warning", description="You have no valid accounts in the database. us >help myaccs for more info on adding accounts. You have been given unranked for now", color=discord.Color.gold())
-                # Making sure it doesn't overwrite the embed generated above
-                elif max_rank[0] != -2:
+                else:
                     embed = discord.Embed(title="Sucess", description=f"You have been granted the role {rank_split} feel free to add any other accounts you may have and run this command again.", color=discord.Color.green())
             else:
                 # They don't have anything in the database
@@ -235,6 +231,7 @@ async def myaccs(ctx,*arg):
 async def quickaccs(ctx,*arg):
     if UseSQL == True:
         try:
+            arg = list(arg)
             # Take in args to modify and create saved data for the User's account
             
             # Create table for the user that called the command 
@@ -257,7 +254,7 @@ async def quickaccs(ctx,*arg):
  
             else:
                 # Atleast one argument passed in
- 
+
                 if arg[0] == "add":
                     while not '#' in arg[1]:
                         arg[1] = arg[1] +" "+arg[2]
@@ -380,7 +377,7 @@ async def rc(ctx,*arg):
                             item = discord.Embed(title="Invalid account number" ,color=discord.Color.red())
                         else:
                             # Account number should be valid here
-                            name = Result[int(acc.content)-1][2]>updaterole
+                            name = Result[int(acc.content)-1][2]
                             region = settings["assumed region"]
  
             else:
@@ -525,7 +522,7 @@ async def rc(ctx,*arg):
         await ctx.send(embed = item)
         # Upon successful completion aka getting the embed output
  
-    except TimeoutError:
+    except exceptions.TimeoutError:
         embed = discord.Embed(title="Timeout, took too long", description=f"A 30 second timeout ran out." ,color=discord.Color.red())
         await ctx.send(embed = embed)
     except:
