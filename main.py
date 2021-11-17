@@ -42,9 +42,9 @@ async def on_ready():
     await bot.change_presence(activity = discord.Activity(name=">help", type=2))
 
 
-def Create_TB(user,type):
+def Create_TB(id,type):
     # S signifies a saved accounts table. M signifys a Myaccounts table
-    sql = f'''CREATE TABLE IF NOT EXISTS {type}{user} (
+    sql = f'''CREATE TABLE IF NOT EXISTS {type}{id} (
     `id` INT NOT NULL AUTO_INCREMENT,
     `note` VARCHAR(255) NULL,
     `ign` VARCHAR(255) NULL,
@@ -92,6 +92,51 @@ def compressname(arg):
 # ----------------------------------------------------------------------------------------------------------------------
 # Commands
 # ----------------------------------------------------------------------------------------------------------------------
+
+@bot.command()
+async def setroles(ctx, *arg):
+    if UseSQL:
+        guild = ctx.author.guild.id
+        # New table prefix, rl
+        sql = f'''CREATE TABLE IF NOT EXISTS rl{guild} (
+        `id` INT NOT NULL AUTO_INCREMENT,
+        `role` VARCHAR(255) NULL,
+        `value` VARCHAR(255) NULL,
+        PRIMARY KEY (`id`));
+        '''
+        cursor.execute(sql)
+
+        sql = f'select * from rl{guild}'
+        cursor.execute(sql)
+
+        # Verify that the role inputted is actually a valid role. Api call or hard coded list prob
+        # Also probably want a setroles list function to list assigned roles and what you have left to assign
+        # Also add these functions to the updaterole function
+
+        if len(arg) == 0:
+            embed = embed = discord.Embed(title="Warning", description="No arguements passed in. Use '>help setroles' for more info", color=discord.Color.gold())
+        else:
+
+            for item in arg:
+                split = item.split(':')
+                to_rem = ["<",">","!","@","&"]
+                for i in to_rem:
+                    split[1] = split[1].replace(i,'')
+                # So I know this implementation is kinda slow, but it will work fine enough for now. If I need to make this faster in the future I can
+                sql = f'''REPLACE INTO rl{guild} (role,value) VALUES (%s,%s)'''
+                values = (split[0],split[1])
+                cursor.execute(sql, values)
+                DB.commit()
+
+            embed = embed = discord.Embed(title="Success", description="Roles have sucessfully been updated", color=discord.Color.green())
+
+
+
+    
+    
+    await ctx.send(embed=embed)
+
+
 
 @bot.command()
 async def updaterole(ctx):
