@@ -34,6 +34,15 @@ if UseSQL == True:
 #Make 1 api call at the start since it doesn't change basically ever anyways
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
+# Generates a list of the currently avaliable tiers. Should be up to date as long as the api keeps running
+valid_ranks = []
+for i in len(CompTiers["data"][0]["tiers"]):
+    # Just making sure that it's not one of the unused divisions
+    if not i["divisionName"] in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
+        # valid_ranks should have the lowercase version of the ranks
+        valid_ranks.append(i["divisionName"].lower())
+
+
 # initialize the bot
 bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
 
@@ -106,8 +115,7 @@ async def setroles(ctx, *arg):
         '''
         cursor.execute(sql)
 
-        sql = f'select * from rl{guild}'
-        cursor.execute(sql)
+
 
         # Verify that the role inputted is actually a valid role. Api call or hard coded list prob
         # Also probably want a setroles list function to list assigned roles and what you have left to assign
@@ -142,16 +150,21 @@ async def setroles(ctx, *arg):
 async def updaterole(ctx):
     if UseSQL:
         try:
+            # A less hacky solution to role removal
+            guild = ctx.author.guild.id
+            sql = f'select * from rl{guild}'
+            cursor.execute(sql)
+            rslt = cursor.fetchall()
+
+            rsltDict = {}
+            for i in range(rslt):
+                # Key is the role and the value for the key in the value
+                rsltDict[rslt[i][0]] = rslt[i][1]
+
             # A really hacky solution to remove all the rank roles someone has
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["unranked"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["iron"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["bronze"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["silver"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["gold"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["platnium"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["diamond"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["immortal"]))
-            await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names["radiant"]))
+            for rank in rsltDict:
+                await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names[rank]))
+
     
             sql = f"select * from M{ctx.message.author.id}"
             cursor.execute(sql)
