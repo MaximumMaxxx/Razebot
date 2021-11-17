@@ -116,15 +116,27 @@ async def setroles(ctx, *arg):
         cursor.execute(sql)
 
 
-
         # Verify that the role inputted is actually a valid role. Api call or hard coded list prob
         # Also probably want a setroles list function to list assigned roles and what you have left to assign
         # Also add these functions to the updaterole function
 
-        if len(arg) == 0:
+        invalidDated = False
+        # Remove any invalid roles
+        for item in arg:
+            if item in valid_ranks:
+                pass
+            else:
+                index = arg.index(item)
+                arg.pop(index)
+                invalidDated = True
+
+        if len(arg) == 0 and invalidDated == False:
             embed = embed = discord.Embed(title="Warning", description="No arguements passed in. Use '>help setroles' for more info", color=discord.Color.gold())
+        elif invalidDated == True and len(arg) == 0:
+            embed = embed = discord.Embed(title="Warning", description="No valid arguements passed in. Use '>help setroles' for more info", color=discord.Color.gold())
         else:
 
+            
             for item in arg:
                 split = item.split(':')
                 to_rem = ["<",">","!","@","&"]
@@ -136,13 +148,30 @@ async def setroles(ctx, *arg):
                 cursor.execute(sql, values)
                 DB.commit()
 
+            sql = f"select * from rl{guild}"
+            cursor.execute(sql)
+            in_db = cursor.fetchall()
+
+            rsltDict = {}
+            for i in range(in_db):
+                # Key is the role and the value for the key in the value
+                rsltDict[in_db[i][0]] = in_db[i][1]
+
+            missing_roles = []
+            if not len(in_db) == len(valid_ranks):
+                for key in valid_ranks:
+                    if not rsltDict[key] != "":
+                        missing_roles.append(key)
+            
+
+
+
             embed = embed = discord.Embed(title="Success", description="Roles have sucessfully been updated", color=discord.Color.green())
 
-
-
-    
-    
     await ctx.send(embed=embed)
+    
+    if missing_roles != []:
+        embed = embed = discord.Embed(title="Warning", description=f"You are still missing the following roles {missing_roles}", color=discord.Color.yellow())
 
 
 
@@ -163,7 +192,7 @@ async def updaterole(ctx):
 
             # A really hacky solution to remove all the rank roles someone has
             for rank in rsltDict:
-                await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=role_names[rank]))
+                await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=rsltDict[rank]))
 
     
             sql = f"select * from M{ctx.message.author.id}"
