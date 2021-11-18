@@ -35,13 +35,15 @@ if UseSQL == True:
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
 # Generates a list of the currently avaliable tiers. Should be up to date as long as the api keeps running
+
 valid_ranks = []
-for i in len(CompTiers["data"][0]["tiers"]):
+for i in CompTiers.json()["data"][0]["tiers"]:
     # Just making sure that it's not one of the unused divisions
-    if not i["divisionName"] in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
+    if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
         # valid_ranks should have the lowercase version of the ranks
         valid_ranks.append(i["divisionName"].lower())
 
+print(valid_ranks)
 
 # initialize the bot
 bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
@@ -105,6 +107,8 @@ def compressname(arg):
 @bot.command()
 async def setroles(ctx, *arg):
     if UseSQL:
+        missing_roles = []
+        arg= list(arg)
         guild = ctx.author.guild.id
         # New table prefix, rl
         sql = f'''CREATE TABLE IF NOT EXISTS rl{guild} (
@@ -122,8 +126,10 @@ async def setroles(ctx, *arg):
 
         invalidDated = False
         # Remove any invalid roles
+
         for item in arg:
-            if item in valid_ranks:
+            split = item.split(':')
+            if split[0] in valid_ranks:
                 pass
             else:
                 index = arg.index(item)
@@ -148,31 +154,32 @@ async def setroles(ctx, *arg):
                 cursor.execute(sql, values)
                 DB.commit()
 
-            sql = f"select * from rl{guild}"
-            cursor.execute(sql)
-            in_db = cursor.fetchall()
+        sql = f"select * from rl{guild}"
+        cursor.execute(sql)
+        in_db = cursor.fetchall()
 
-            rsltDict = {}
-            for i in range(in_db):
-                # Key is the role and the value for the key in the value
-                rsltDict[in_db[i][0]] = in_db[i][1]
+        rsltDict = {}
+        for i in range(len(in_db)):
+            # Key is the role and the value for the key in the value
+            rsltDict[in_db[i][1]] = in_db[i][2]
 
-            missing_roles = []
-            if not len(in_db) == len(valid_ranks):
-                for key in valid_ranks:
-                    if not rsltDict[key] != "":
-                        missing_roles.append(key)
+        missing_roles = []
+        if not len(in_db) == len(valid_ranks):
+            for key in valid_ranks:
+                # A kinda hacky way to append if it's not in the dictionary
+                try:
+                    rsltDict[key]
+                except:
+                    missing_roles.append(key)
+
             
 
-
-
             embed = embed = discord.Embed(title="Success", description="Roles have sucessfully been updated", color=discord.Color.green())
-
     await ctx.send(embed=embed)
     
     if missing_roles != []:
-        embed = embed = discord.Embed(title="Warning", description=f"You are still missing the following roles {missing_roles}", color=discord.Color.yellow())
-
+        embed = embed = discord.Embed(title="Warning", description=f"You are still missing the following roles {missing_roles}. You may enouncer errors while these are not properly configured use '>help setroles'", color=discord.Color.gold())
+        await ctx.send(embed=embed)
 
 
 @bot.command()
@@ -186,13 +193,14 @@ async def updaterole(ctx):
             rslt = cursor.fetchall()
 
             rsltDict = {}
-            for i in range(rslt):
+            for i in range(len(rslt)):
                 # Key is the role and the value for the key in the value
-                rsltDict[rslt[i][0]] = rslt[i][1]
+                rsltDict[rslt[i][1]] = rslt[i][2]
 
             # A really hacky solution to remove all the rank roles someone has
+            
             for rank in rsltDict:
-                await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, name=rsltDict[rank]))
+                await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, id=int(rsltDict[rank])))
 
     
             sql = f"select * from M{ctx.message.author.id}"
@@ -225,7 +233,6 @@ async def updaterole(ctx):
                 rank_split = "unranked"
             guild = ctx.message.guild
     
-            print(f":{rank_split}:")
             role = get(guild.roles, name=role_names[rank_split])
             await ctx.author.add_roles(role)
         except:
@@ -233,7 +240,7 @@ async def updaterole(ctx):
             print(logging.exception(''))
 
     else:
-        embed=discord.Embed(title="ERROR", description="Please setup, connect, and enable a SQL database to use this feature", color=discord.Color.red())
+        embed=discord.Embed(title="ERROR", description="Please setup, connect, and enable a SQL database to use this feature", color=discord.Color.gold())
     embed.set_footer(text="Razebot by MaximumMaxx")    
     await ctx.send(embed=embed)
 
