@@ -7,6 +7,7 @@ import requests # Api Calls
 from PIL import ImageColor # Converting Hex to RGB
 import logging # Error Logging
 from asyncio import exceptions # Should already be included with discord.py
+import mysql.connector
 
 # The setting dictionary. Won't store across restarts but this is more meant for if you change the source code to have
 # an easy place to keep all the essential settings. Also this approach doesn't require SQL which was partly my goal.
@@ -22,8 +23,7 @@ help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_C
 "setroles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Set roles",f"Allows you to set the roles for each rank. All ranks must be set before updateroles or rankcheck can be used. Format: '>setroles role:@role' note: you may have to add a space, type the @, then remove the space. The command will also tell you what role links you are missing."]
 }
 
-# Setting up the SQL connection (used for most things in this bot)
-import mysql.connector
+# Establishing DB connection
 # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
 DB = mysql.connector.connect()
 print(DB)
@@ -32,8 +32,7 @@ cursor = DB.cursor()
 #Make 1 api call at the start since it doesn't change basically ever anyways
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
-# Generates a list of the currently avaliable tiers. Should be up to date as long as the api keeps running
-
+# Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
 valid_ranks = []
 for i in CompTiers.json()["data"][0]["tiers"]:
     # Just making sure that it's not one of the unused divisions
@@ -631,9 +630,8 @@ async def rc(ctx,*arg):
                 split = name.split('#')
     
                 # Api calls, using formatted strings
-    
-                MMR= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
-                MH= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
+                MH= requests.get(f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{split[0]}/{split[1]}?filter=competitive")
+                MMR = requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{split[0]}/{split[1]}")
                 # Some default values in case a 200 isn't recieved
                 default_color = False
     
@@ -670,13 +668,17 @@ async def rc(ctx,*arg):
                         assists /= match_count
                         score /= match_count
 
+                    mmr_change = 0
+                    for game in range(MMR_json["data"]):
+                        mmr_change += game["mmr_change_to_last_game"]
                     # Extracting some other data from the mmr api
                     rank=MMR_json["data"]["currenttierpatched"]
                     tiernum=MMR_json["data"]["currenttier"]
                     elo=MMR_json["data"]["elo"]
                     image = CompTiers.json()["data"][0]["tiers"][tiernum]["largeIcon"]
                     color = CompTiers.json()["data"][0]["tiers"][tiernum]["color"][:6]
-    
+
+
                 elif MMR.status_code == 204:
                     output = "Not enough recent data. Play the game more. Also might be wrong region."
                     image = "https://pics.me.me/git-gud-19872304.png"
@@ -719,6 +721,7 @@ async def rc(ctx,*arg):
                 if MH.status_code == 200:
                     item.add_field(name="KDA",value=(round(kills,1)+"|"+round(deaths,1)+"|"+round(assists,1)),inline=True)
                     item.add_field(name="Average Score",value=score,inline=True)
+                    item.add_field(name="MMR change", value = mmr_change)
                 elif MH.status_code == 429:
                     item.add_field(name="KDA",value=("Rate limited"),inline=True)
                 else:
