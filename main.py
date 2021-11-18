@@ -633,14 +633,40 @@ async def rc(ctx,*arg):
                 # Api calls, using formatted strings
     
                 MMR= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
-    
+                MH= requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr/{region}/{split[0]}/{split[1]}")
                 # Some default values in case a 200 isn't recieved
                 default_color = False
     
                 # Setting the output based on the result of the api call
                 if MMR.status_code==200:
                     MMR_json = MMR.json()
-                    
+
+                    # Match history data  
+                    if MH.status_code == 200:
+                        MH_json = MH.json()
+                        match_count = len(MH_json["data"])
+                        kills = 0
+                        deaths = 0
+                        assists = 0
+                        score = 0
+                        uuid = MH_json["puuid"]
+                        for i in range(match_count):
+                            j = 0
+                            while True:
+                                if MH_json["data"][i]["players"]["all_players"][j]["puuid"] == uuid:
+                                    player_index = j
+                                    break
+                                else:
+                                    j+=1
+                            kills += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["kills"]
+                            deaths += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["deaths"]
+                            assists += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["assists"]
+                            score += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["score"]
+                        kills /= len(MH_json["data"])
+                        deaths /= len(MH_json["data"])
+                        assists /= len(MH_json["data"])
+                        score /= len(MH_json["data"])
+
                     rank=MMR_json["data"]["currenttierpatched"]
                     tiernum=MMR_json["data"]["currenttier"]
                     elo=MMR_json["data"]["elo"]
@@ -685,6 +711,10 @@ async def rc(ctx,*arg):
                     item = discord.Embed(title=name, description=output, color=EMB_color)
     
                 item.set_thumbnail(url=image)
+
+                if MH.status_code == 200:
+                    item.add_field(name="KDA",value=(kills+"|"+deaths+"|"+assists),inline=True)
+                    item.add_field(name="Average Score",value=score,inline=True)
                 
             
             # Upon successful completion aka getting the embed output
