@@ -310,7 +310,7 @@ async def updaterole(ctx):
                 rank_split = "unranked"
             guild = ctx.message.guild
 
-            role = get(guild.roles, name=role_names[rank_split])
+            role = get(guild.roles, name=roleDict[rank_split])
             await ctx.author.add_roles(role)
         except:
             embed = discord.Embed(title="Nope", description=f"Something did a big ol break...", color=discord.Color.red())
@@ -643,6 +643,7 @@ async def rc(ctx,*arg):
 
                     # Match history data  
                     if MH.status_code == 200:
+                        # Variables n stuff
                         MH_json = MH.json()
                         match_count = len(MH_json["data"])
                         kills = 0
@@ -650,6 +651,7 @@ async def rc(ctx,*arg):
                         assists = 0
                         score = 0
                         uuid = MH_json["puuid"]
+                        # for all the matches in the match history, add them to the the variables
                         for i in range(match_count):
                             j = 0
                             while True:
@@ -662,11 +664,13 @@ async def rc(ctx,*arg):
                             deaths += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["deaths"]
                             assists += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["assists"]
                             score += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["score"]
-                        kills /= len(MH_json["data"])
-                        deaths /= len(MH_json["data"])
-                        assists /= len(MH_json["data"])
-                        score /= len(MH_json["data"])
+                        # Averaging the data
+                        kills /= match_count
+                        deaths /= match_count
+                        assists /= match_count
+                        score /= match_count
 
+                    # Extracting some other data from the mmr api
                     rank=MMR_json["data"]["currenttierpatched"]
                     tiernum=MMR_json["data"]["currenttier"]
                     elo=MMR_json["data"]["elo"]
@@ -713,15 +717,18 @@ async def rc(ctx,*arg):
                 item.set_thumbnail(url=image)
 
                 if MH.status_code == 200:
-                    item.add_field(name="KDA",value=(kills+"|"+deaths+"|"+assists),inline=True)
+                    item.add_field(name="KDA",value=(round(kills,1)+"|"+round(deaths,1)+"|"+round(assists,1)),inline=True)
                     item.add_field(name="Average Score",value=score,inline=True)
-                
+                elif MH.status_code == 429:
+                    item.add_field(name="KDA",value=("Rate limited"),inline=True)
+                else:
+                    item.add_field(name="KDA",value="Something went wrong. Try again in a few minutes. If the problem persists contact a server admin",inline=True)
             
-            # Upon successful completion aka getting the embed output
-    
         except exceptions.TimeoutError:
+            # If the user input times out
             item = discord.Embed(title="Timeout, took too long", description=f"A 30 second timeout ran out." ,color=discord.Color.red())
         except:
+            # Something else broke. Should hopefully never be displayed
             item = discord.Embed(title="Something broke in a very bad way", description=f"Please send help" ,color=discord.Color.red())
             print(logging.exception(''))
 
