@@ -14,7 +14,7 @@ import mysql.connector
 settings = {"assumed region":"na","prefix":">"}
 
 # Command:[embed,ImageLink]
-help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","RC aka Rank Check", f"Takes in 0,1, or 2 parameters and searches the valorant api for a player's stats. If it finds a valid player it returns an with the player's rank and MMR. With one argument it takes in the Valorant name formatted like Name#Tag and pulls from the default region in settings. If no arguments are provided it prompts the user with questions instead. If you want to specify region you can either use 2 arguments like >rc Vname#tag region or no arguments"],
+help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","Rank Check", f"Allows you to check the rank of any player. Usage: the base command is '>rc'. If no account is specified it will pull from your quick accounts list. If you ping someone, it will pull from their accounts list. If you put a username like 'rc name#tag' it will check that player's rank. Finally you can add a region like 'na' if the person is in a different region than the server owner has set."],
 "quickaccs":["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png","Quick Accounts",f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
 "myaccs":["https://pngimg.com/uploads/smurf/smurf_PNG34.png","My accounts",f"A command to interact with a database of saved quick accounts. My accounts is used to manage a list of accounts you own. Syntax: All uses start with >myaccs followed by something. To view a list of your saved accounts use '>myaccs'. To add an account use '>myaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>myaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
 "updaterole":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005",">updaterole",f"A command to automatically update your role based on what accounts you have linked to >myaccs."],
@@ -504,7 +504,6 @@ async def rc(ctx,*arg):
         for i in range(len(set)):
             # Key is the role and the value for the key in the value
             setDict[set[i][1]] = set[i][2]
-        print(setDict)
         region = setDict["region"]
     except:
         print("the second one got ya")
@@ -620,7 +619,6 @@ async def rc(ctx,*arg):
         
                         print(arg)
                         name = arg[0]
-                        region = settings["assumed region"]
                     else: 
                         print(arg)
                         name= arg[0]
@@ -636,10 +634,17 @@ async def rc(ctx,*arg):
                 # Some default values in case a 200 isn't recieved
                 default_color = False
     
+                kills = "Unkown"
+                deaths = "Unknown"
+                assists = "Unknown"
+                score = "Unknown"
+                mmr_change = "Unknown"
+
+
                 # Setting the output based on the result of the api call
                 if MMR.status_code==200:
                     MMR_json = MMR.json()
-
+                
                     # Match history data  
                     if MH.status_code == 200:
                         # Variables n stuff
@@ -664,16 +669,15 @@ async def rc(ctx,*arg):
                             assists += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["assists"]
                             score += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["score"]
                         # Averaging the data
-                        kills /= match_count
-                        deaths /= match_count
-                        assists /= match_count
-                        score /= match_count
+                        kills = round(kills/match_count,1)
+                        deaths = round(deaths/match_count,1)
+                        assists = round(assists/match_count,1)
+                        score = round(score / match_count,1)
 
                     mmr_change = 0
                     for game in MMR_json["data"]:
                         mmr_change += game["mmr_change_to_last_game"]
                     # Extracting some other data from the mmr api
-                    print(type(MMR_json))
                     rank=MMR_json["data"][0]["currenttierpatched"]
                     tiernum=MMR_json["data"][0]["currenttier"]
                     elo=MMR_json["data"][0]["elo"]
@@ -721,7 +725,7 @@ async def rc(ctx,*arg):
                 item.set_thumbnail(url=image)
 
                 if MH.status_code == 200:
-                    item.add_field(name="KDA",value=f"{round(kills,1)}|{round(deaths,1)}|{round(assists,1)}",inline=True)
+                    item.add_field(name="KDA",value=f"{kills}|{deaths}|{assists}",inline=True)
                     item.add_field(name="Average Score",value=score,inline=True)
                     item.add_field(name="MMR change", value = mmr_change)
                 elif MH.status_code == 429:
