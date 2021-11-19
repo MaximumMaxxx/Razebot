@@ -41,6 +41,8 @@ Danika - Emotional support
 
 Yang Yang - Suggesting features
 
+Rogue - testing and some dev help
+
 
 Avery - Initially teaching me to do SQL stuff
 
