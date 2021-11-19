@@ -31,6 +31,16 @@ Rank check example
 
 Also a bunch of articles and stack overflow helps.
 
+<h3>All the people who helped</h3>
+
+Lacas - convincing me to multi-server the bot
+Danika - Emotional support
+Yang Yang - Suggesting features
+
+Avery - Initially teaching me to do SQL stuff
+
+And everyone else in the Valorant Club discord
+
 <h3>Legal Stuff</h3>
 
 THIS PROJECT IS NOT ASSOCIATED OR ENDORSED BY RIOT GAMES. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.
