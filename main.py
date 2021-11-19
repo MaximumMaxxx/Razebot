@@ -337,7 +337,7 @@ async def myaccs(ctx,*arg):
             print(Result)
 
             if len(Result) == 0:
-                Output = "You have no accounts us '>myaccs add User#tag note' to add your account(s)"
+                Output = "You have no accounts use '>myaccs add User#tag note' to add your account(s)"
             else:
                 Output = "display"
                 embed=discord.Embed(title="Your Accounts", color=discord.Color.dark_red())
@@ -467,11 +467,12 @@ async def help(ctx,*arg):
         arg[1] = arg[1] +" "+arg[2]
         arg.pop(1)
     
-    prefix = settings["prefix"]
+
+    prefix = ">"
     helps = help_menus
     if len(arg) == 0:
         # Return the default help menu
-        embed = discord.Embed(title = "List of help menus",description = f"Current help menus: {prefix}help rc, {prefix}help myaccs, {prefix}help quickaccs, {prefix}help updaterole")
+        embed = discord.Embed(title = "List of help menus",description = f"Current help menus: {prefix}help rc, {prefix}help myaccs, {prefix}help quickaccs, {prefix}help updaterole, {prefix}help quick vs myaccs, {prefix}help settings, {prefix}help setroles")
         image = "https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true"
     else:
         # Return the specified help menu
@@ -669,12 +670,13 @@ async def rc(ctx,*arg):
                         score /= match_count
 
                     mmr_change = 0
-                    for game in range(MMR_json["data"]):
+                    for game in MMR_json["data"]:
                         mmr_change += game["mmr_change_to_last_game"]
                     # Extracting some other data from the mmr api
-                    rank=MMR_json["data"]["currenttierpatched"]
-                    tiernum=MMR_json["data"]["currenttier"]
-                    elo=MMR_json["data"]["elo"]
+                    print(type(MMR_json))
+                    rank=MMR_json["data"][0]["currenttierpatched"]
+                    tiernum=MMR_json["data"][0]["currenttier"]
+                    elo=MMR_json["data"][0]["elo"]
                     image = CompTiers.json()["data"][0]["tiers"][tiernum]["largeIcon"]
                     color = CompTiers.json()["data"][0]["tiers"][tiernum]["color"][:6]
 
@@ -719,7 +721,7 @@ async def rc(ctx,*arg):
                 item.set_thumbnail(url=image)
 
                 if MH.status_code == 200:
-                    item.add_field(name="KDA",value=(round(kills,1)+"|"+round(deaths,1)+"|"+round(assists,1)),inline=True)
+                    item.add_field(name="KDA",value=f"{round(kills,1)}|{round(deaths,1)}|{round(assists,1)}",inline=True)
                     item.add_field(name="Average Score",value=score,inline=True)
                     item.add_field(name="MMR change", value = mmr_change)
                 elif MH.status_code == 429:
