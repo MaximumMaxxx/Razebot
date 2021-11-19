@@ -18,7 +18,7 @@ Additionally it'll probably work on Windows but I can't guarentee it.
 
 Rank check example
 
-![Rank Checking](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/razebot%20sample%20output.png?raw=true)
+![Rank Checking](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/razebot%20sample.png?raw=true)
 
 
 <h3>Credit to all the projects I took from for this</h3>
