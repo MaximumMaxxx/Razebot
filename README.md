@@ -31,6 +31,8 @@ Rank check example
 
 Also a bunch of articles and stack overflow helps.
 
+Additionally I can't deny that [Valorant Labs](https://top.gg/bot/702201518329430117) was here before me and has some more features. 
+
 <h3>All the people who helped</h3>
 
 Lacas - convincing me to multi-server the bot
