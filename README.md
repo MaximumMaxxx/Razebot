@@ -34,8 +34,11 @@ Also a bunch of articles and stack overflow helps.
 <h3>All the people who helped</h3>
 
 Lacas - convincing me to multi-server the bot
+
 Danika - Emotional support
+
 Yang Yang - Suggesting features
+
 
 Avery - Initially teaching me to do SQL stuff
 
