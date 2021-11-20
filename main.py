@@ -9,10 +9,6 @@ import logging # Error Logging
 from asyncio import exceptions # Should already be included with discord.py
 import mysql.connector
 
-# The setting dictionary. Won't store across restarts but this is more meant for if you change the source code to have
-# an easy place to keep all the essential settings. Also this approach doesn't require SQL which was partly my goal.
-settings = {"assumed region":"na","prefix":">"}
-
 # Command:[embed,ImageLink]
 help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","Rank Check", f"Allows you to check the rank of any player. Usage: the base command is '>rc'. If no account is specified it will pull from your quick accounts list. If you ping someone, it will pull from their accounts list. If you put a username like 'rc name#tag' it will check that player's rank. Finally you can add a region like 'na' if the person is in a different region than the server owner has set."],
 "quickaccs":["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png","Quick Accounts",f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
@@ -25,7 +21,7 @@ help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_C
 
 # Establishing DB connection
 # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
-DB = mysql.connector.connect()
+DB = mysql.connector.connect(Your connection here)
 print(DB)
 cursor = DB.cursor()
 
@@ -44,7 +40,7 @@ print(valid_ranks)
 valid_settings = ["region"]
 
 # initialize the bot
-bot = commands.Bot(command_prefix=settings["prefix"], help_command=None)
+bot = commands.Bot(command_prefix=">", help_command=None)
 
 @bot.event
 async def on_ready():
@@ -94,13 +90,6 @@ def RmFrom_TB(user, type, ign):
     else:
         return("Name not In Database")
 
-def compressnote(arg):
-    list(arg)
-
-
-def compressname(arg):
-    list(arg)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Commands
 # ----------------------------------------------------------------------------------------------------------------------
@@ -120,44 +109,51 @@ async def settings(ctx, *arg):
 
     cursor.execute(sql)
 
-    # getting and converting the list of settings into a dictionary for easier code writing
-    sql = f"select * from set{guild}"
-    cursor.execute(sql)
-    settings = cursor.fetchall()
+    if arg[0] == "list":
+        nice_string = ""
+        for set in valid_settings:
+            nice_string += f"{set} "
+        embed = embed = discord.Embed(title="Avaliable Settings", description=f"List of avaliable settings: {nice_string}", color=discord.Color.light_gray())
 
-    settingsDict = {}
-    for i in range(len(settings)):
-        # Key is the role and the value for the key in the value
-        settingsDict[settings[i][1]] = settings[i][2]
-    
-    for item in arg:
-        split = item.split(':')
-        if split[0] in valid_settings:
-            continue
-        else:
-            index = arg.index(item)
-            arg.pop(index)
-            invalidDated = True
-
-
-
-    if len(arg) == 0 and invalidDated:
-        # put in args, just not valid ones
-        embed = embed = discord.Embed(title="Error", description="No valid arguements passed in. Use '>help settings' for more info", color=discord.Color.red())
-    elif len(arg) == 0 and invalidDated == False:
-        # No args
-        embed = embed = discord.Embed(title="Error", description="No arguments passed in", color=discord.Color.red())
     else:
-        # Valid args
-        for setting in arg:
-            split = setting.split(":")
+        # getting and converting the list of settings into a dictionary for easier code writing
+        sql = f"select * from set{guild}"
+        cursor.execute(sql)
+        settings = cursor.fetchall()
+
+        settingsDict = {}
+        for i in range(len(settings)):
+            # Key is the role and the value for the key in the value
+            settingsDict[settings[i][1]] = settings[i][2]
+        
+        for item in arg:
+            split = item.split(':')
             if split[0] in valid_settings:
-                # Replace into a is a great command
-                sql = f'''REPLACE INTO set{guild} (setting,value) VALUES (%s,%s)'''
-                values = (split[0],split[1])
-                cursor.execute(sql,values)
-                DB.commit()
-        embed = embed = discord.Embed(title="Success", description="Settings have sucessfully been updated", color=discord.Color.green())
+                continue
+            else:
+                index = arg.index(item)
+                arg.pop(index)
+                invalidDated = True
+
+
+
+        if len(arg) == 0 and invalidDated:
+            # put in args, just not valid ones
+            embed = embed = discord.Embed(title="Error", description="No valid arguements passed in. Use '>help settings' for more info", color=discord.Color.red())
+        elif len(arg) == 0 and invalidDated == False:
+            # No args
+            embed = embed = discord.Embed(title="Error", description="No arguments passed in", color=discord.Color.red())
+        else:
+            # Valid args
+            for setting in arg:
+                split = setting.split(":")
+                if split[0] in valid_settings:
+                    # Replace into a is a great command
+                    sql = f'''REPLACE INTO set{guild} (setting,value) VALUES (%s,%s)'''
+                    values = (split[0],split[1])
+                    cursor.execute(sql,values)
+                    DB.commit()
+            embed = embed = discord.Embed(title="Success", description="Settings have sucessfully been updated", color=discord.Color.green())
 
     await ctx.send(embed = embed)
 
@@ -747,4 +743,4 @@ async def rc(ctx,*arg):
     item.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = item)
 
-bot.run()
+bot.run(your token here)
