@@ -21,7 +21,7 @@ help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_C
 
 # Establishing DB connection
 # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
-DB = mysql.connector.connect(Your connection here)
+DB = mysql.connector.connect()
 print(DB)
 cursor = DB.cursor()
 
@@ -179,10 +179,11 @@ async def setroles(ctx, *arg):
     for item in arg:
         split = item.split(':')
         if split[0] in valid_ranks:
-            pass
+            continue
         else:
             index = arg.index(item)
             arg.pop(index)
+            print("Invalid")
             invalidDated = True
 
     if len(arg) == 0 and invalidDated == False:
@@ -190,8 +191,6 @@ async def setroles(ctx, *arg):
     elif invalidDated == True and len(arg) == 0:
         embed = embed = discord.Embed(title="Warning", description="No valid arguements passed in. Use '>help setroles' for more info", color=discord.Color.gold())
     else:
-
-        
         for item in arg:
             split = item.split(':')
             to_rem = ["<",">","!","@","&"]
@@ -202,7 +201,9 @@ async def setroles(ctx, *arg):
             values = (split[0],split[1])
             cursor.execute(sql, values)
             DB.commit()
-
+        embed = embed = discord.Embed(title="Success", description="Roles have sucessfully been updated", color=discord.Color.green())
+    
+    await ctx.send(embed=embed)
     sql = f"select * from rl{guild}"
     cursor.execute(sql)
     in_db = cursor.fetchall()
@@ -221,10 +222,7 @@ async def setroles(ctx, *arg):
             except:
                 missing_roles.append(key)
 
-        
 
-        embed = embed = discord.Embed(title="Success", description="Roles have sucessfully been updated", color=discord.Color.green())
-    await ctx.send(embed=embed)
 
     if missing_roles != []:
         embed = discord.Embed(title="Warning", description=f"You are still missing the following roles {missing_roles}. You may enouncer errors while these are not properly configured use '>help setroles'", color=discord.Color.gold())
@@ -238,13 +236,15 @@ async def updaterole(ctx):
     has_roles = False
     has_region = True
     set = []
+    try:
+        sql = f"select * from rl{guild}"
+        cursor.execute(sql)
+        roles = cursor.fetchall()
 
-    sql = f"select * from rl{guild}"
-    cursor.execute(sql)
-    roles = cursor.fetchall()
-
-    if len(roles) == len(valid_ranks):
-        has_roles = True
+        if len(roles) == len(valid_ranks):
+            has_roles = True
+    except:
+        pass
 
     try:
         sql = f"select * from set{guild}"
@@ -743,4 +743,4 @@ async def rc(ctx,*arg):
     item.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = item)
 
-bot.run(your token here)
+bot.run()
