@@ -1,7 +1,7 @@
+# External imports
 import time # Error logging
 import discord # All bot functionality 
-from discord.ext import commands
-from discord.ext.commands.core import has_role # Commands for said discord integration
+from discord.ext import commands # Commands for said discord integration
 from discord.utils import get # Used for rank assignment
 import requests # Api Calls
 from PIL import ImageColor # Converting Hex to RGB
@@ -9,19 +9,13 @@ import logging # Error Logging
 from asyncio import exceptions # Should already be included with discord.py
 import mysql.connector
 
-# Command:[embed,ImageLink]
-help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","Rank Check", f"Allows you to check the rank of any player. Usage: the base command is '>rc'. If no account is specified it will pull from your quick accounts list. If you ping someone, it will pull from their accounts list. If you put a username like 'rc name#tag' it will check that player's rank. Finally you can add a region like 'na' if the person is in a different region than the server owner has set."],
-"quickaccs":["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png","Quick Accounts",f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
-"myaccs":["https://pngimg.com/uploads/smurf/smurf_PNG34.png","My accounts",f"A command to interact with a database of saved quick accounts. My accounts is used to manage a list of accounts you own. Syntax: All uses start with >myaccs followed by something. To view a list of your saved accounts use '>myaccs'. To add an account use '>myaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>myaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
-"updaterole":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005",">updaterole",f"A command to automatically update your role based on what accounts you have linked to >myaccs."],
-"quick vs myaccs":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Quick accounts Vs My Accounts",f"The distinction between quickaccs and myaccs is a small but important one. myaccs is a list of all accounts you personally own. myaccs is thus pulled from in a situation where you are the subject, the prime examples of these are rank updating, and when you're pinged for a rank check. constrasting that is quickaccs. quickaccs is a list of accounts you want to check without having to memorize tags, this might be a friend's account, or it might be a youtuber's account. You can put whatever accounts you want in quickaccs and it won't affect anything"],
-"settings":["https://static.thenounproject.com/png/1524589-200.png","settings",f"Allows you to change the settings for the bot. formatting: '>settings setting:value' use '>settings list' for a list of avaliable settings"],
-"setroles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Set roles",f"Allows you to set the roles for each rank. All ranks must be set before updateroles or rankcheck can be used. Format: '>setroles role:@role' note: you may have to add a space, type the @, then remove the space. The command will also tell you what role links you are missing."]
-}
+# Local Imports
+from help_menus import help_menus
+from bot_token import bot_token, connection
 
 # Establishing DB connection
 # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
-DB = mysql.connector.connect()
+DB = mysql.connector.connect(connection)
 print(DB)
 cursor = DB.cursor()
 
@@ -50,7 +44,7 @@ async def on_ready():
 # Helper functions
 # ----------------------------------------------------------------------------------------------------------------------
 
-def Create_TB(id,type):
+def Acc_TB(id,type):
     # S signifies a saved accounts table. M signifys a Myaccounts table
     sql = f'''CREATE TABLE IF NOT EXISTS {type}{id} (
     `id` INT NOT NULL AUTO_INCREMENT,
@@ -60,7 +54,7 @@ def Create_TB(id,type):
     '''
     cursor.execute(sql)
 
-def AddTo_TB(user, type, ign, note):
+def Add_ACCS(user, type, ign, note):
     # S signifies a saved accounts table. M signifys a Myaccounts table
     sql = f'''select * from {type}{user} where ign like '{ign}';'''
     cursor.execute(sql)
@@ -323,7 +317,7 @@ async def myaccs(ctx,*arg):
         # Take in args to modify and create saved data for the User's account
         arg = list(arg)
         # Create table for the user that called the command 
-        Create_TB(ctx.message.author.id,"M")
+        Acc_TB(ctx.message.author.id,"M")
 
         if len(arg) == 0:
             # return an embed with a of their accounts
@@ -334,8 +328,9 @@ async def myaccs(ctx,*arg):
 
             if len(Result) == 0:
                 Output = "You have no accounts use '>myaccs add User#tag note' to add your account(s)"
+            elif len(Result) > 25:
+                Output = "You have reached the account limit. No clue why you would prossibly own 25 accounts but ok. Use '/help' for more info on managing your accounts"
             else:
-                Output = "display"
                 embed=discord.Embed(title="Your Accounts", color=discord.Color.dark_red())
                 for i in range(len(Result)):
                     embed.add_field(name=Result[i][2],value=Result[i][1])
@@ -346,7 +341,7 @@ async def myaccs(ctx,*arg):
 
         else:
             # Atleast two arguments passed in
-            if arg[0] == "add":
+            if arg[0] == "add":    
                 # This is not super clean code but functions were being weird so I can't do that solution
                 while not '#' in arg[1]:
                     arg[1] = arg[1] +" "+arg[2]
@@ -359,7 +354,7 @@ async def myaccs(ctx,*arg):
                 if len(arg) == 2:
                     arg.append("No note")
 
-                Output = AddTo_TB(ctx.message.author.id,"M",arg[1],arg[2])
+                Output = Add_ACCS(ctx.message.author.id,"M",arg[1],arg[2])
             elif arg[0] == "del":
 
                 while not '#' in arg[1]:
@@ -375,10 +370,12 @@ async def myaccs(ctx,*arg):
 
             else:
                 # Invalid arguement
-                Output = "Invalid argument us >help for help"
+                Output = "Invalid argument use >help for help"
         
         if Output =="sucess":
             embed=discord.Embed(title="Sucess", description="Operation Completed Sucessfully", color=discord.Color.green())
+        elif Output == "maxed":
+            embed=discord.Embed(title="ERROR", description="You have reached the accounts limit. Not sure why you own more than 25 accounts but ok. use '/help' for help removing accounts", color=discord.Color.red())            
         elif Output !="display":
             embed=discord.Embed(title="ERROR", description=Output, color=discord.Color.red())
     except:
@@ -397,7 +394,7 @@ async def quickaccs(ctx,*arg):
         # Take in args to modify and create saved data for the User's account
         
         # Create table for the user that called the command 
-        Create_TB(ctx.message.author.id,"S")
+        Acc_TB(ctx.message.author.id,"S")
 
         if len(arg) == 0:
             # return an embed with a of their accounts
@@ -408,6 +405,8 @@ async def quickaccs(ctx,*arg):
 
             if len(Result) == 0:
                 Output = "You have no accounts use '>quickaccs add User#tag note' to add your account(s)"
+            elif len(Result) > 25:
+                Output = "You have reached the account limit. You either have a lot of friends and/or watch too much Valorant youtube. Either way until I feel like working around the field limit you're a little screwed. Use '/help' for more info on managing your accounts"
             else:
                 Output = "display"
                 embed=discord.Embed(title="Your Accounts", color=discord.Color.dark_red())
@@ -428,7 +427,7 @@ async def quickaccs(ctx,*arg):
                 # Take all data after and add to myaccs db
                 if len(arg) == 2:
                     arg.append("No note")
-                Output = AddTo_TB(ctx.message.author.id,"S",arg[1],arg[2])
+                Output = Add_ACCS(ctx.message.author.id,"S",arg[1],arg[2])
             elif arg[0] == "del":
                 while not '#' in arg[1]:
                     arg[1] = arg[1] +" "+arg[2]
@@ -445,8 +444,10 @@ async def quickaccs(ctx,*arg):
         
         if Output =="sucess":
             embed=discord.Embed(title="Sucess", description="Operation Completed Sucessfully", color=discord.Color.green())
+        elif Output == "maxed":
+            embed=discord.Embed(title="ERROR", description="While it is understamdable that you would want more than 25 saved accounts, until due time when I feel like working around the field limit you'll just have to priotatize", color=discord.Color.red())
         elif Output !="display":
-            embed=discord.Embed(title="ERROR", description=Output, color=discord.Color.red())
+            embed=discord.Embed(title="ERROR", description=Output, color=discord.Color.red()) 
     except:
         embed=discord.Embed(title="ERROR", description="Something broke lol get rekt", color=discord.Color.red())
         print(logging.exception(''))
@@ -743,4 +744,4 @@ async def rc(ctx,*arg):
     item.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = item)
 
-bot.run()
+bot.run(bot_token)
