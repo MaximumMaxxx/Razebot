@@ -80,7 +80,6 @@ def RmFrom_TB(user, type, ign):
         cursor.execute(sql)
         DB.commit()
         return("sucess")
- 
     else:
         return("Name not In Database")
 
@@ -247,8 +246,6 @@ async def updaterole(ctx):
     except:
         has_region = False
     
-
-
     try:
         setDict = {}
         for i in range(len(set)):
