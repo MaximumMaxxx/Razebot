@@ -1,6 +1,7 @@
 # External imports
 import time # Error logging
 import discord
+from discord import user
 from discord.commands.commands import option # All bot functionality 
 from discord.ext import commands # Commands for said discord integration
 from discord.utils import get # Used for rank assignment
@@ -12,11 +13,10 @@ import mysql.connector #sql connection
 
 # Local Imports
 from help_menus import help_menus,avaliable_help_menus
-from bot_token import bot_token, connection
+import bot_token
 
 # Establishing DB connection
-# In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
-DB = mysql.connector.connect(connection)
+DB = mysql.connector.connect(host=bot_token.host, user=bot_token.user, password=bot_token.password, database=bot_token.database)
 print(DB)
 cursor = DB.cursor()
 
@@ -769,4 +769,4 @@ async def rc(ctx,*arg):
     item.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = item)
 
-bot.run(bot_token)
+bot.run(bot_token.bot_token)

@@ -1,2 +1,2 @@
 bot_token = ""
-connection =  ""
+host = "", user = "", password = "", database = ""
