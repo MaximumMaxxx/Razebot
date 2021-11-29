@@ -1,5 +1,6 @@
 import time # Error logging
-import discord # All bot functionality 
+import discord
+from discord.commands.commands import option # All bot functionality 
 from discord.ext import commands
 from discord.ext.commands.core import has_role # Commands for said discord integration
 from discord.utils import get # Used for rank assignment
@@ -18,12 +19,19 @@ help_menus = {"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_C
 "settings":["https://static.thenounproject.com/png/1524589-200.png","settings",f"Allows you to change the settings for the bot. formatting: '>settings setting:value' use '>settings list' for a list of avaliable settings"],
 "setroles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Set roles",f"Allows you to set the roles for each rank. All ranks must be set before updateroles or rankcheck can be used. Format: '>setroles role:@role' note: you may have to add a space, type the @, then remove the space. The command will also tell you what role links you are missing."]
 }
+avaliable_help_menus = ["rc","quickaccs","updaterole","quick vs myaccs","settings","setroles"]
+
 
 # Establishing DB connection
 # In the parenthesis put the things to connect to your Database. Ex: host = "localhost", user = "sudo", password = "My very secure password", database = "Razebot"
 DB = mysql.connector.connect()
 print(DB)
 cursor = DB.cursor()
+
+# Time variables for the reconnect time thing
+timeout_time = 2700
+refresh_time = time.time() + timeout_time
+
 
 #Make 1 api call at the start since it doesn't change basically ever anyways
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
@@ -49,6 +57,19 @@ async def on_ready():
 # ----------------------------------------------------------------------------------------------------------------------
 # Helper functions
 # ----------------------------------------------------------------------------------------------------------------------
+
+def refresh():
+    global refresh_time
+    global DB
+    global cursor
+    if time.time() > refresh_time:
+        DB.close()
+        DB = mysql.connector.connect(host="localhost",user="root",password="root",database="Razebot")
+        cursor = DB.cursor()
+        print("Refreshed")
+    refresh_time = time.time()+timeout_time
+    
+
 
 def Create_TB(id,type):
     # S signifies a saved accounts table. M signifys a Myaccounts table
@@ -96,13 +117,14 @@ def RmFrom_TB(user, type, ign):
 
 @bot.command()
 async def settings(ctx, *arg):
+    refresh()
     invalidDated = False
 
     arg= list(arg)
     guild = ctx.author.guild.id
     sql = f'''CREATE TABLE IF NOT EXISTS set{guild} (
     `id` INT NOT NULL AUTO_INCREMENT,
-    `setting` VARCHAR(255) NULL,
+    `setting` VARCHAR(255) NULL UNIQUE,
     `value` VARCHAR(255) NULL,
     PRIMARY KEY (`id`));
     '''
@@ -161,13 +183,14 @@ async def settings(ctx, *arg):
 
 @bot.command()
 async def setroles(ctx, *arg):
+    refresh()
     missing_roles = []
     arg= list(arg)
     guild = ctx.author.guild.id
     # New table prefix, rl
     sql = f'''CREATE TABLE IF NOT EXISTS rl{guild} (
     `id` INT NOT NULL AUTO_INCREMENT,
-    `role` VARCHAR(255) NULL,
+    `role` VARCHAR(255) NULL UNIQUE,
     `value` VARCHAR(255) NULL,
     PRIMARY KEY (`id`));
     '''
@@ -230,8 +253,9 @@ async def setroles(ctx, *arg):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@bot.command()
+@bot.slash_command(nane="Update Role",description="Update your role based on you accounts save in Myaccounts", guild_ids=[898725831164178442])
 async def updaterole(ctx):
+    refresh()
     guild = ctx.author.guild.id
     has_roles = False
     has_region = True
@@ -241,6 +265,8 @@ async def updaterole(ctx):
         cursor.execute(sql)
         roles = cursor.fetchall()
 
+        print(roles)
+        print(len(valid_ranks))
         if len(roles) == len(valid_ranks):
             has_roles = True
     except:
@@ -250,6 +276,7 @@ async def updaterole(ctx):
         sql = f"select * from set{guild}"
         cursor.execute(sql)
         set = cursor.fetchall()
+        print(set)
     except:
         has_region = False
     
@@ -260,9 +287,13 @@ async def updaterole(ctx):
         for i in range(len(set)):
             # Key is the role and the value for the key in the value
             setDict[set[i][1]] = set[i][2]
-        region = setDict["default region"]
+        region = setDict["region"]
+        has_region= True
     except:
         has_region = False
+
+    print(has_roles)
+    print(has_region)
 
     if has_region and has_roles:
         try:
@@ -276,7 +307,7 @@ async def updaterole(ctx):
                 await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, id=int(roleDict[rank])))
 
 
-            sql = f"select * from M{ctx.message.author.id}"
+            sql = f"select * from M{ctx.author.id}"
             cursor.execute(sql)
             Result = cursor.fetchall()
             if len(Result) != 0:
@@ -303,9 +334,10 @@ async def updaterole(ctx):
                 # They don't have anything in the database
                 embed = discord.Embed(title="ERROR", description="You have no items in the database us >help myaccs for more info. You have been given unranked for now", color=discord.Color.red())
                 rank_split = "unranked"
-            guild = ctx.message.guild
+            guild = ctx.guild
 
-            role = get(guild.roles, name=roleDict[rank_split])
+            role = get(guild.roles, name="diamond")
+            print(role)
             await ctx.author.add_roles(role)
         except:
             embed = discord.Embed(title="Nope", description=f"Something did a big ol break...", color=discord.Color.red())
@@ -313,12 +345,13 @@ async def updaterole(ctx):
     else:
         embed = discord.Embed(title="Error", description=f"Please configure a default region region and/or setup default roles. use '>help settings' and '>help setroles'", color=discord.Color.red())
     embed.set_footer(text="Razebot by MaximumMaxx")    
-    await ctx.send(embed=embed)
+    await ctx.respond(embed=embed)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 @bot.command()
 async def myaccs(ctx,*arg):
+    refresh()
     try:
         # Take in args to modify and create saved data for the User's account
         arg = list(arg)
@@ -392,6 +425,7 @@ async def myaccs(ctx,*arg):
 
 @bot.command()
 async def quickaccs(ctx,*arg):
+    refresh()
     try:
         arg = list(arg)
         # Take in args to modify and create saved data for the User's account
@@ -456,39 +490,37 @@ async def quickaccs(ctx,*arg):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@bot.command()
-async def help(ctx,*arg):
-    # Compress the note into arg[1] so you don't have to use quotes
-    while len(arg) > 2:
-        arg[1] = arg[1] +" "+arg[2]
-        arg.pop(1)
-    
+@bot.slash_command()
+async def help(ctx,setting: str = option(avaliable_help_menus,None,required=False)):
+    setting = setting or None
 
-    prefix = ">"
+    print(type(setting))
+
     helps = help_menus
-    if len(arg) == 0:
+    if type(setting) != str:
         # Return the default help menu
-        embed = discord.Embed(title = "List of help menus",description = f"Current help menus: {prefix}help rc, {prefix}help myaccs, {prefix}help quickaccs, {prefix}help updaterole, {prefix}help quick vs myaccs, {prefix}help settings, {prefix}help setroles")
+        embed = discord.Embed(title = "List of help menus",description = f"Current help menus: /help rc, /help myaccs, /help quickaccs, /help updaterole, /help quick vs myaccs, /help settings, /help setroles")
         image = "https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true"
     else:
         # Return the specified help menu
-        if arg[0] in helps:
-            embed = discord.Embed(title = helps[arg[0]][1], description = helps[arg[0]][2], color = discord.Color.dark_green())
-            image = helps[arg[0]][0]
+        if setting in helps:
+            embed = discord.Embed(title = helps[setting][1], description = helps[setting][2], color = discord.Color.dark_green())
+            image = helps[setting][0]
         else:
             # Invalid help menu
             image = "https://lh3.googleusercontent.com/proxy/_c_wrpevgis34jEBvd9uRPxYueZbavIRTtU9zNuZJ-FMRw-yo8XHX6n-tSeiJc7ZipzFB3snxw35LnIwCVrxku3cpoMAY1U"
-            embed =  embed = discord.Embed(title="Setting not found", description=f"{prefix}help for a general list of help menus" ,color=discord.Color.red())
+            embed =  embed = discord.Embed(title="Setting not found", description=f"/help for a general list of help menus" ,color=discord.Color.red())
  
     # return the help menu
     embed.set_thumbnail(url=image)
     embed.set_footer(text="Razebot by MaximumMaxx")
-    await ctx.send(embed = embed)
+    await ctx.respond(embed = embed)
 
 # ----------------------------------------------------------------------------------------------------------------------
 
 @bot.command()
 async def rc(ctx,*arg):
+    refresh()
     has_region = True
     guild = ctx.author.guild.id
     try:
