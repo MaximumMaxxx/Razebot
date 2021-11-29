@@ -1,8 +1,8 @@
 # External imports
 import time # Error logging
 import discord
-from discord import user
-from discord.commands.commands import option # All bot functionality 
+from discord.commands.commands import option
+from discord.embeds import Embed # All bot functionality 
 from discord.ext import commands # Commands for said discord integration
 from discord.utils import get # Used for rank assignment
 import requests # Api Calls
@@ -102,6 +102,15 @@ def RmFrom_TB(user, type, ign):
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Commands
+# ----------------------------------------------------------------------------------------------------------------------
+
+@bot.slash_command()
+async def credits(ctx):
+    embed = discord.Embed(title = "Credits", description=None)
+    embed.add_field(name="Loading Icon",value="Icon by Krishprakash24gmail via Wikicommons under CC Atribution-sharalike 4.0 International")
+    embed.add_field(name="Wrapper",value="Pycord by the pycord development team")
+    ctx.respond(embed=embed)
+
 # ----------------------------------------------------------------------------------------------------------------------
 
 @bot.command()
@@ -242,8 +251,9 @@ async def setroles(ctx, *arg):
 
 # ----------------------------------------------------------------------------------------------------------------------
 
-@bot.slash_command(nane="Update Role",description="Update your role based on you accounts save in Myaccounts", guild_ids=[898725831164178442])
+@bot.slash_command(nane="Update Role",description="Update your role based on you accounts save in Myaccounts")
 async def updaterole(ctx):
+    await ctx.respond("Thinking")
     refresh()
     guild = ctx.author.guild.id
     has_roles = False
@@ -322,17 +332,17 @@ async def updaterole(ctx):
                 embed = discord.Embed(title="ERROR", description="You have no items in the database us >help myaccs for more info. You have been given unranked for now", color=discord.Color.red())
                 rank_split = "unranked"
             guild = ctx.guild
-
-            role = get(guild.roles, name="diamond")
-            print(role)
+            role = get(guild.roles, id=int(roleDict[rank_split]))
             await ctx.author.add_roles(role)
         except:
             embed = discord.Embed(title="Nope", description=f"Something did a big ol break...", color=discord.Color.red())
             print(logging.exception(''))
     else:
         embed = discord.Embed(title="Error", description=f"Please configure a default region region and/or setup default roles. use '>help settings' and '>help setroles'", color=discord.Color.red())
-    embed.set_footer(text="Razebot by MaximumMaxx")    
-    await ctx.respond(embed=embed)
+    embed.set_footer(text="Razebot by MaximumMaxx")
+
+    msg = await ctx.interaction.original_message()  #gets the message from response
+    await msg.edit(embed=embed,content= None) #edits message from response
 
 # ----------------------------------------------------------------------------------------------------------------------
 
