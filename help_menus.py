@@ -8,3 +8,4 @@ help_menus = {
 "settings":["https://static.thenounproject.com/png/1524589-200.png","settings",f"Allows you to change the settings for the bot. formatting: '>settings setting:value' use '>settings list' for a list of avaliable settings"],
 "setroles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Set roles",f"Allows you to set the roles for each rank. All ranks must be set before updateroles or rankcheck can be used. Format: '>setroles role:@role' note: you may have to add a space, type the @, then remove the space. The command will also tell you what role links you are missing."]
 }
+avaliable_help_menus = ["rc","quickaccs","myaccs","updaterole","quick vs myaccs","settings","setroles"]
