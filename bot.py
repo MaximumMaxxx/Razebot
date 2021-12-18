@@ -1,67 +1,37 @@
 # External imports
 import time # Error logging
-import discord
-from discord.commands import option
-from discord.embeds import Embed # All bot functionality 
+import discord # All bot functionality 
 from discord.ext import commands # Commands for said discord integration
 from discord.utils import get # Used for rank assignment
 import requests # Api Calls
 from PIL import ImageColor # Converting Hex to RGB
 import logging # Error Logging
-from asyncio import exceptions # Should already be included with pycord
-# import mysql.connector #sql connection
-import os # Reading the .env file
+from asyncio import exceptions # Timeout errors
+from static.bot.env import secrets # The secrets
+import mysql
+
+from app import CompTiers
 
 # Local Imports
-from help_menus import help_menus,avaliable_help_menus
-
-# Establishing DB connection
-#DB = mysql.connector.connect(host=os.environ.get("dbhost"), user=os.environ.get("dbuname"), password=os.environ.get("dbpassword"), database=os.environ.get("database"))
-#print(DB)
-#cursor = DB.cursor()
-
-# Time variables for the reconnect time thing
-timeout_time = 2700
-refresh_time = time.time() + timeout_time
+from static.bot.help_menus import help_menus,avaliable_help_menus
 
 
-#Make 1 api call at the start since it doesn't change basically ever anyways
-CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
-
-# Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
-valid_ranks = []
-for i in CompTiers.json()["data"][0]["tiers"]:
-    # Just making sure that it's not one of the unused divisions
-    if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
-        # valid_ranks should have the lowercase version of the ranks
-        valid_ranks.append(i["divisionName"].lower())
-
-print(valid_ranks)
-valid_settings = ["region"]
-
-# initialize the bot
-bot = commands.Bot(command_prefix=">", help_command=None)
-
-@bot.event
-async def on_ready():
-    await bot.change_presence(activity = discord.Activity(name=">help", type=2))
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Helper functions
 # ----------------------------------------------------------------------------------------------------------------------
 
-def refresh():
-    global refresh_time
-    global DB
-    global cursor
+def refresh(DB,refresh_time,timeout_time,cursor):
     if time.time() > refresh_time:
         DB.close()
         DB = mysql.connector.connect(host="localhost",user="root",password="root",database="Razebot")
         cursor = DB.cursor()
         print("Refreshed")
     refresh_time = time.time()+timeout_time
+    return(cursor,refresh_time)
+
     
-def Acc_TB(id,type):
+def Acc_TB(id,type,cursor):
     # S signifies a saved accounts table. M signifys a Myaccounts table
     sql = f'''CREATE TABLE IF NOT EXISTS {type}{id} (
     `id` INT NOT NULL AUTO_INCREMENT,
@@ -71,7 +41,7 @@ def Acc_TB(id,type):
     '''
     cursor.execute(sql)
 
-def Add_ACCS(user, type, ign, note):
+def Add_ACCS(user, type, ign, note, DB, cursor):
     # S signifies a saved accounts table. M signifys a Myaccounts table
     sql = f'''select * from {type}{user} where ign like '{ign}';'''
     cursor.execute(sql)
@@ -86,7 +56,7 @@ def Add_ACCS(user, type, ign, note):
         DB.commit()
         return("sucess")
  
-def RmFrom_TB(user, type, ign):
+def RmFrom_TB(user, type, ign, cursor, DB):
     # S signifies a saved accounts table. M signifys a Myaccounts table
     sql = f'''select * from {type}{user} where ign like '{ign}';'''
     cursor.execute(sql)
@@ -104,7 +74,13 @@ def RmFrom_TB(user, type, ign):
 # Commands
 # ----------------------------------------------------------------------------------------------------------------------
 class Razebot(commands.Cog):
-    @bot.slash_command()
+    timeout_time = 2700
+    refresh_time = time.time() + timeout_time
+
+    def __init__(self,bot):
+        self.bot=bot
+
+    @commands.slash_command()
     async def credits(self,ctx):
         embed = discord.Embed(title = "Credits", description=None)
         embed.add_field(name="Loading Icon",value="Icon by Krishprakash24gmail via Wikicommons under CC Atribution-sharalike 4.0 International")
@@ -113,7 +89,7 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.command()
+    @commands.command()
     async def settings(self,ctx, *arg):
         refresh()
         invalidDated = False
@@ -179,7 +155,7 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.command()
+    @commands.command()
     async def setroles(self,ctx, *arg):
         refresh()
         missing_roles = []
@@ -251,7 +227,7 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.slash_command(nane="Update Role",description="Update your role based on you accounts save in Myaccounts")
+    @commands.slash_command(nane="Update Role",description="Update your role based on you accounts save in Myaccounts")
     async def updaterole(self,ctx):
         await ctx.respond("Thinking")
         refresh()
@@ -346,7 +322,7 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.command()
+    @commands.command()
     async def myaccs(self,ctx,*arg):
         refresh()
         try:
@@ -423,7 +399,7 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.command()
+    @commands.command()
     async def quickaccs(self,ctx,*arg):
         refresh()
         try:
@@ -494,8 +470,8 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.slash_command()
-    async def help(self,ctx,setting: str = option(avaliable_help_menus,None,required=False)):
+    @commands.slash_command()
+    async def help(self,ctx,setting: str = discord.option(avaliable_help_menus,None,required=False)):
         setting = setting or None
 
         print(type(setting))
@@ -522,7 +498,7 @@ class Razebot(commands.Cog):
 
     # ----------------------------------------------------------------------------------------------------------------------
 
-    @bot.command()
+    @commands.command()
     async def rc(self,ctx,*arg):
         refresh()
         has_region = True
@@ -585,7 +561,7 @@ class Razebot(commands.Cog):
                             # User input
                             await ctx.send("What account number would you like to check? Use 'Cancel' to cancel the command")
                             await ctx.send(embed=item)
-                            acc = await bot.wait_for("message", check=check, timeout=30)
+                            acc = await self.bot.wait_for("message", check=check, timeout=30)
                             if acc.content =="Cancel":
                                 Preembed = True
                                 item = discord.Embed(title="Operation Cancelled" ,color=discord.Color.green())
@@ -614,7 +590,7 @@ class Razebot(commands.Cog):
                         
                         print(arg[0])
                         # https://www.reddit.com/r/Discord_Bots/comments/quyrbk/get_username_from_uuid/
-                        user = await bot.fetch_user(arg[0])
+                        user = await self.bot.fetch_user(arg[0])
 
                         username = user.name
 
@@ -631,7 +607,7 @@ class Razebot(commands.Cog):
                         await ctx.send(embed=embed)
                         
                         # User input
-                        acc = await bot.wait_for("message", check=check, timeout=30)
+                        acc = await self.bot.wait_for("message", check=check, timeout=30)
                         if acc.content =="Cancel":
                             Preembed = True
                             item = discord.Embed(title="Operation Cancelled" ,color=discord.Color.green())
@@ -779,3 +755,5 @@ class Razebot(commands.Cog):
         item.set_footer(text="Razebot by MaximumMaxx")
         await ctx.send(embed = item)
 
+def setup(bot):
+    bot.add_cog(Razebot(bot))
