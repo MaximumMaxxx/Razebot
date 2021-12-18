@@ -1,35 +1,42 @@
-from flask import Flask, render_template
+from quart import Quart, render_template,redirect,url_for,request
+from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
+from env import secrets
+import hashlib
 
-app = Flask(__name__)
+app = Quart(__name__)
+
+# This sets the secret to the secret key in binary, no super useful but kinda fun
+# Probably doesn't pose a security risk but honestly no guarentees
+app.secret_key = ''.join(format(ord(x),'b') for x in secrets["websecretkey"])
 
 @app.route("/")
 @app.route("/index")
-def index():
-    return render_template("index.html")
+async def index():
+    return await render_template("index.html")
 
 @app.route("/privacy")
-def privacy():
-    return render_template("imagine.html",route="Privacy Policy")
+async def privacy():
+    return await render_template("imagine.html",route="Privacy Policy")
 
 @app.route("/legal")
-def legal():
-    return render_template("imagine.html",route="Legal Anything")
+async def legal():
+    return await render_template("imagine.html",route="Legal Anything")
 
 @app.route("/about")
-def about():
-    return render_template("imagine.html",route="About Page")
+async def about():
+    return await render_template("imagine.html",route="About Page")
 
 @app.route("/support")
-def support():
-    return render_template("imagine.html",route="Support System")
+async def support():
+    return await render_template("imagine.html",route="Support System")
 
 @app.route("/contact")
-def contact():
-    return render_template("imagine.html",route="Contact Page")
+async def contact():
+    return await render_template("imagine.html",route="Contact Page")
 
 @app.route("/dashboard")
-def dashboard():
-    return render_template("imagine.html",route="Dashboard")
+async def dashboard():
+    return await render_template("imagine.html",route="Dashboard")
 
 if __name__ == '__main__':
     app.run(port="6969", host="localhost")

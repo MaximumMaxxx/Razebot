@@ -10,13 +10,13 @@ from PIL import ImageColor # Converting Hex to RGB
 import logging # Error Logging
 from asyncio import exceptions # Should already be included with pycord
 import mysql.connector #sql connection
+import os # Reading the .env file
 
 # Local Imports
 from help_menus import help_menus,avaliable_help_menus
-import bot_token
 
 # Establishing DB connection
-DB = mysql.connector.connect(host=bot_token.host, user=bot_token.user, password=bot_token.password, database=bot_token.database)
+DB = mysql.connector.connect(host=os.environ.get("dbhost"), user=os.environ.get("dbuname"), password=os.environ.get("dbpassword"), database=os.environ.get("database"))
 print(DB)
 cursor = DB.cursor()
 
@@ -779,4 +779,6 @@ async def rc(ctx,*arg):
     item.set_footer(text="Razebot by MaximumMaxx")
     await ctx.send(embed = item)
 
-bot.run(bot_token.bot_token)
+
+if __name__ == '__main__':
+    bot.run(os.environ.get("bottoken"))
