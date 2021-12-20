@@ -1,78 +1,37 @@
-from quart import Quart, render_template,redirect,url_for,request
-from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
-from static.bot.env import secrets
-from discord.ext import commands
-from bot import Razebot
-import mysql.connector #sql connection
-import requests
-import time
-
-# Establishing DB connection
-DB = mysql.connector.connect(host=secrets["dbhost"], user=secrets["dbuname"], password=secrets["dbpassword"], database=secrets["database"])
-print(DB)
-cursor = DB.cursor()
-
-# Time variables for the reconnect time thing
-
-
-
-#Make 1 api call at the start since it doesn't change basically ever anyways
-CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
-
-# Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
-valid_ranks = []
-for i in CompTiers.json()["data"][0]["tiers"]:
-    # Just making sure that it's not one of the unused divisions
-    if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
-        # valid_ranks should have the lowercase version of the ranks
-        valid_ranks.append(i["divisionName"].lower())
-
-print(valid_ranks)
-valid_settings = ["region"]
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Quart Things
-# ----------------------------------------------------------------------------------------------------------------------
+from quart import Quart, render_template,redirect,url_for,request, session
+from quart_discord import DiscordOAuth2Session
+from static.bot.cogs.secrets import secrets
 
 app = Quart(__name__)
+app.config["SECRET_KEY"] = secrets["websecretkey"]
+app.config["DISCORD_CLIENT_ID"] = secrets["dscclientid"]
+app.config["DISCORD_CLIENT_SECRET"] = secrets["dscclientsecret"]
+app.config["DISCORD_REDIRECT_URI"] = secrets["dscredirecturi"]
 
-bot=commands.Bot(help_command=None, command_prefix=">")
-bot.load_extension("bot")
-
-# This sets the secret to the secret key in binary, no super useful but kinda fun
-# Probably doesn't pose a security risk but honestly no guarentees
-app.secret_key = ''.join(format(ord(x),'b') for x in secrets["websecretkey"])
+discord = DiscordOAuth2Session(app)
 
 @app.route("/")
-@app.route("/index")
-async def index():
-    return await render_template("index.html")
-
-@app.route("/privacy")
-async def privacy():
-    return await render_template("imagine.html",route="Privacy Policy")
-
-@app.route("/legal")
-async def legal():
-    return await render_template("imagine.html",route="Legal Anything")
-
-@app.route("/about")
-async def about():
-    return await render_template("imagine.html",route="About Page")
-
-@app.route("/support")
-async def support():
-    return await render_template("imagine.html",route="Support System")
-
-@app.route("/contact")
-async def contact():
-    return await render_template("imagine.html",route="Contact Page")
+async def home():
+    return await render_template("index.html",discord_url="/login")
 
 @app.route("/dashboard")
 async def dashboard():
-    return await render_template("imagine.html",route="Dashboard")
+    return await render_template("imagine.html", route="Dashboard")
+
+@app.route("/login")
+async def login():
+    return await discord.create_session()
+
+@app.route("/callback")
+async def callback():
+    try:
+        await discord.callback()
+    except:
+        return redirect(url_for("login"))
+    
+    user = await discord.fetch_user()
+    return await render_template("imagine.html",route=f"{user.name} # {user.discriminator}")
+
 
 if __name__ == '__main__':
-    app.run(port="6969", host="localhost")
-    bot.run(secrets["bottoken"])
-    
+    app.run(debug=True, port=6969)
