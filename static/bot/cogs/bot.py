@@ -15,20 +15,22 @@ from secrets import secrets
 
 
 class Bot(commands.Bot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args,**kwargs)
-        self.ipc = ipc.Server(self,secret_key=secrets["ipcsecret"])
-        
-    async def on_ready(self):
-        """Called upon the READY event"""
-        print("Bot is up")
+	def __init__(self,*args,**kwargs):
+		super().__init__(*args,**kwargs)
 
-    async def on_ipc_ready(self):
-        print("Ipc is up")
-    
-    async def on_ipc_error(self,endpoint,error):
-        print(endpoint, " raised ",error)
+		self.ipc = ipc.Server(self,secret_key = "Swas")
 
+	async def on_ready(self):
+		"""Called upon the READY event"""
+		print("Bot is ready.")
+
+	async def on_ipc_ready(self):
+		"""Called upon the IPC Server being ready"""
+		print("Ipc server is ready.")
+
+	async def on_ipc_error(self, endpoint, error):
+		"""Called upon an error being raised within an IPC route"""
+		print(endpoint, "raised", error)
 
 
 # Establishing DB connection
@@ -803,6 +805,6 @@ async def rc(ctx,*arg):
     await ctx.send(embed = item)
 
 
-Bot.ipc.start()
+bot.ipc.start()
 bot.run(secrets["bottoken"])
 
