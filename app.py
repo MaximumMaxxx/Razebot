@@ -7,6 +7,7 @@ import time
 import os
 
 from static.bot.cogs.secrets import secrets
+from static.bot.cogs.botRewrite import Razebot
 
 app = Quart(__name__)
 
@@ -91,23 +92,9 @@ def get_prefix(client, message):
 
 bot = commands.Bot(command_prefix=(get_prefix), description="Simple economy bot", help_command=None)
 
-
-
-@bot.event
-async def on_ready():
-  print("I'm in")
-
-
-class Economy(commands.Cog):
-  """ All Economy commands """
-  @commands.command()
-  async def ping(self,ctx):
-    await ctx.send("I am possibly alive")
-
-
 def run():
   bot.loop.create_task(app.run_task('0.0.0.0'))
-  bot.add_cog(Economy(bot))
+  bot.add_cog(Razebot(bot))
   bot.run(secrets["bottoken"])
 
 def runWebOnly():

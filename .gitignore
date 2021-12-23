@@ -140,3 +140,4 @@ cython_debug/
 log.txt
 bot_token.py
 static/bot/env.py
+static/bot/cogs/secrets.py
