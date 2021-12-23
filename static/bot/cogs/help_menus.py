@@ -9,3 +9,5 @@ help_menus = {
 "setroles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Set roles",f"Allows you to set the roles for each rank. All ranks must be set before updateroles or rankcheck can be used. Format: '>setroles role:@role' note: you may have to add a space, type the @, then remove the space. The command will also tell you what role links you are missing."]
 }
 avaliable_help_menus = ["rc","quickaccs","myaccs","updaterole","quick vs myaccs","settings","setroles"]
+
+avaliable_settings = ["region","prefix"]

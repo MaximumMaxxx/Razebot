@@ -5,6 +5,7 @@ from quart import Quart, redirect, url_for, render_template, request
 import mysql.connector
 import time
 import os
+import requests
 
 from static.bot.cogs.secrets import secrets
 from static.bot.cogs.botRewrite import Razebot
@@ -28,6 +29,17 @@ def refresh():
         cursor = DB.cursor()
         print("Refreshed")
     refresh_time = time.time()+timeout_time
+
+
+CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
+# Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
+valid_ranks = []
+for i in CompTiers.json()["data"][0]["tiers"]:
+    # Just making sure that it's not one of the unused divisions
+    if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
+        # valid_ranks should have the lowercase version of the ranks
+        valid_ranks.append(i["divisionName"].lower())
+
 
 
 app.secret_key = secrets["websecuritykey"]
@@ -56,12 +68,6 @@ async def login():
 @app.route("/logout/")
 async def logout():
   discordd.revoke()
-  return redirect(url_for(".home"))
-
-@app.route("/me/")
-@requires_authorization
-async def me():
-  user = await discordd.fetch_user()
   return redirect(url_for(".home"))
 
 @app.route("/callback/")
