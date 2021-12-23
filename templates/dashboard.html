@@ -1,16 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- This whole page is somewhat styled after the Discord Dev Portal mixed with mee6 and Carl Bot dashboards so credit to the designers that made those -->
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Polic</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="../static/css/main.css">
-    <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
+        <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
 </head>
 <body>
-    <h1>
-        The thing is done
-    </h1>
+    <!-- Top Bar -->
+    <nav class="flex items-center bg-mainbg p-3 sticky top-0 z-50">
+        <div class="flex items-center">
+            <button aria-label="Button for opening the navigation menu" class="inline-flex p-3 hover:bg-valoreddarker rounded lg:hidden ml-auto transition-width duration-200 ease-in-out text-white" onclick="menuToggle()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>        
+            </button>
+            <a href="/" class="p-2 mr-4 inline-flex items-center rounded-lg">
+                <img src="../static/images/Valobot logo raze thicckened.png" alt="Logo" class="h-10 mr-4">
+                <span class="text-xl font-bold uppercase tracking-wide text-white">
+                    Razebot
+                </span>
+            </a>
+
+        </div>
+    </nav>
+
+    <!-- Side bar similar to discord dev portal -->
+    <div id="sidebar" class="grid grid-cols-1 w-0 h-screen bg-black text-white transition-all lg:w-full">
+        <a name="MenuItem" href="/dashboard/{{guild_id}}/" class="hidden w-11/12 h-12 p-2 hover:bg-valored">General</a>
+    </div>
+
+    <!-- Jinja for loop for the main body -->
+    <div class="bg-black w-4/5 right-0"></div>
+
 </body>
 </html>
+
+<script>
+    // Probably could do this in python but it was just easier in js
+
+    // Basic Statemanagement for the dashboard
+    function menuToggle() {
+        let menu = document.getElementById("sidebar")
+        menu.classList.toggle("w-full")
+
+        // Kinda a janky way to make the a tags not render for the sidebar when they aren't in use
+        let menuitems = document.getElementsByName("MenuItem")
+        menuitems.forEach(element => {
+            element.classList.toggle("hidden")
+        });
+    }
+</script>
