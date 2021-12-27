@@ -43,19 +43,8 @@ timeout_time = 2700
 refresh_time = time.time() + timeout_time
 
 
-#Make 1 api call at the start since it doesn't change basically ever anyways
-CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 
-# Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
-valid_ranks = []
-for i in CompTiers.json()["data"][0]["tiers"]:
-    # Just making sure that it's not one of the unused divisions
-    if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
-        # valid_ranks should have the lowercase version of the ranks
-        valid_ranks.append(i["divisionName"].lower())
 
-print(valid_ranks)
-valid_settings = ["region"]
 
 
 # initialize the bot
@@ -158,7 +147,7 @@ async def settings(ctx, *arg):
         nice_string = ""
         for set in valid_settings:
             nice_string += f"{set} "
-        embed = embed = discord.Embed(title="Avaliable Settings", description=f"List of avaliable settings: {nice_string}", color=discord.Color.light_gray())
+        embed = discord.Embed(title="Avaliable Settings", description=f"List of avaliable settings: {nice_string}", color=discord.Color.light_gray())
 
     else:
         # getting and converting the list of settings into a dictionary for easier code writing
