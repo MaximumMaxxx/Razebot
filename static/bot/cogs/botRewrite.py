@@ -89,6 +89,60 @@ class Razebot(commands.Bot):
 		else:
 			return("NIDB")
 
+	def get_acc(self,accounts, account_index):
+		# Getting the actual account details
+		region, acc, tag = accounts[account_index][2], accounts[account_index][1], accounts[account_index][3]
+		MH= requests.get(f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive")
+		MMR = requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}")
+
+		kills, deaths, assists, score, mmr_change = "Unkown"
+
+		if MMR.status_code == 200:
+			MMR_json = MMR.json()
+			mmr_change = 0
+			for game in MMR_json["data"]:
+				mmr_change += game["mmr_change_to_last_game"]
+			
+			rank = MMR_json["data"][0]["currenttierpatched"]
+			tiernum = MMR_json["data"][0]["currenttier"]
+			elo = MMR_json["data"][0]["elo"]
+			image=CompTiers.json()["data"][0]["tiers"][tiernum]["largeIcon"]
+			color = CompTiers.json()["data"][0]["tiers"][tiernum]["color"][:6]
+			embed = discord.Embed(color=discord.Color.from_rgb(ImageColor.getcolor("#"+color,"RGB")[0],ImageColor.getcolor("#"+color,"RGB")[1],ImageColor.getcolor("#"+color,"RGB")[2]),description=f"The stats and rank for {acc}",title=acc)
+			embed.add_field(name="Rank", value = rank)
+			embed.add_field(name="MMR",value=elo)
+		elif MMR.status_code == 204: return(discord.Embed(title="ERROR",description="Not enough recent data or wrong region",color= discord.Color.red()))
+		elif MMR.status_code == 429: return(discord.Embed(title="ERROR", description="The bot has been rate limited. Please try again in a few minutes", color=discord.Color.red()))
+		# Python devs be like:
+		else: return(discord.embed(title="ERROR",description= "User not found", color=discord.Color.red())) if MMR.json()["message"] == "User not found" else discord.embed(title="ERROR",description= "Something went horribly wrong and we are all going to die.", color=discord.Color.red())
+				
+		if MH.status_code == 200:
+			MH_json = MH.json()
+			match_count = len(MH_json["data"])
+			kills, deaths, assists, score = 0
+			uuid = MH_json["puuid"]
+
+			for i in range(match_count):
+				for j in range(len(MH_json["data"][i]["players"]["all_players"])):
+					if  MH_json["data"][i]["players"]["all_players"][j]["puuid"] == uuid:
+						player_index = j
+						break
+				kills += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["kills"]
+				deaths += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["deaths"]
+				assists += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["assists"]
+				score += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["score"]
+			kills = round(kills/match_count,1)
+			deaths = round(deaths/match_count,1)
+			assists = round(assists/match_count,1)
+			score = round(score / match_count,1)
+
+			embed.add_field(name="Stats from the last 5 gmaes",value=f"KDA: {kills}|{deaths}|{assists} \n KDR: {kills/deaths} \n Score: {score} \n MMR Change: {mmr_change}")
+		else:
+			embed.add_field(name="ERROR", value="Error getting other stats. If the issue persists please contact me @ MaximumMaxx#0001")
+		embed.set_image(image)
+		embed.set_footer("Razebot by MaximumMaxx")
+		return(embed)
+
 	# ----------------------------------------------------------------------------------------------------------------------
 	# Listeners
 	# ----------------------------------------------------------------------------------------------------------------------
@@ -454,6 +508,8 @@ class Razebot(commands.Bot):
 			return user == ctx.author
 			# This makes sure nobody except the command sender can interact with the "menu"
 
+
+		# Getting which account the user wants
 		while True:
 			try:
 				reaction, user = await self.wait_for("reaction_add", timeout=60, check=check)
@@ -500,48 +556,10 @@ class Razebot(commands.Bot):
 				await message.edit(embed=embed)
 				return
 				# ending the loop if user doesn't react after x seconds
-
-		# account_index 
-		# Api calls, using formatted strings
-		region, acc, tag = accounts[account_index][2], accounts[account_index][1], accounts[account_index][3]
-		MH= requests.get(f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive")
-		MMR = requests.get(f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}")
-
-		kills, deaths, assists, score, mmr_change = "Unkown"
-
-		if MMR.status_code == 200:
-			MMR_json = MMR.json()
-			mmr_change = 0
-			for game in MMR_json["data"]:
-				mmr_change += game["mmr_change_to_last_game"]
-			
-			rank = MMR_json["data"][0]["currenttierpatched"]
-			tiernum = MMR_json["data"][0]["currenttier"]
-			elo = MMR_json["data"][0]["elo"]
-			image=CompTiers.json()["data"][0]["tiers"][tiernum]["largeIcon"]
-			color = CompTiers.json()["data"][0]["tiers"][tiernum]["color"][:6]
-
-		if MH.status_code == 200:
-			MH_json = MH.json()
-			match_count = len(MH_json["data"])
-			kills, deaths, assists, score = 0
-			uuid = MH_json["puuid"]
-
-			for i in range(match_count):
-				for j in range(len(MH_json["data"][i]["players"]["all_players"])):
-					if  MH_json["data"][i]["players"]["all_players"][j]["puuid"] == uuid:
-						player_index = j
-						break
-				kills += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["kills"]
-				deaths += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["deaths"]
-				assists += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["assists"]
-				score += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["score"]
-			kills = round(kills/match_count,1)
-			deaths = round(deaths/match_count,1)
-			assists = round(assists/match_count,1)
-			score = round(score / match_count,1)
-
+		ctx.respond(embed=self.get_acc(accounts,account_index))
 
 	@commands.command(name = "rcacc", description = "Get the stats for a specific VALORANT account")
 	async def rcacc(self, ctx, account: str = option(name="Account", description = "The VALORANT account you would like to check the rank of"), region: str = option(name="Region",description = f"The region the account is in. If not specified will default to the server's default region."))):
-		pass
+		# The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
+		# Accounts is expected to be a list of tuples but you can just pass in a one item list and 0 and it acomplishes the same thing
+		ctx.respond(embed=self.get_acc([(None,account,None,region)],0))
