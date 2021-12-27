@@ -559,7 +559,7 @@ class Razebot(commands.Bot):
 		ctx.respond(embed=self.get_acc(accounts,account_index))
 
 	@commands.command(name = "rcacc", description = "Get the stats for a specific VALORANT account")
-	async def rcacc(self, ctx, account: str = option(name="Account", description = "The VALORANT account you would like to check the rank of"), region: str = option(name="Region",description = f"The region the account is in. If not specified will default to the server's default region."))):
+	async def rcacc(self, ctx, account: str = option(name="Account", description = "The VALORANT account you would like to check the rank of"), region: str = option(name="Region",description = f"The region the account is in. If not specified will default to the server's default region.")):
 		# The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
 		# Accounts is expected to be a list of tuples but you can just pass in a one item list and 0 and it acomplishes the same thing
 		ctx.respond(embed=self.get_acc([(None,account,None,region)],0))
