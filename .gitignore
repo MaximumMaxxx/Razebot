@@ -141,3 +141,4 @@ log.txt
 bot_token.py
 static/bot/env.py
 static/bot/cogs/secrets.py
+static/bot/cogs/bot.py

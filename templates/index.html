@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="../static/css/main.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css">
-  <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css">
+    <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
 
-  <!-- User End Stuff -->
-  <title>Razebot - The first and last Discord bot you'll need for VALORANT</title>
-  <meta property="og:description" content="The Ultimate VALORANT Discord Bot.">
+    <!-- User End Stuff -->
+    <title>Razebot - The first and last Discord bot you'll need for VALORANT</title>
+    <meta property="og:description" content="The Ultimate VALORANT Discord Bot.">
 
-  <!-- Insert all the meta tags here -->
+    <!-- Insert all the meta tags here -->
 
 
 </head>
@@ -123,11 +123,6 @@
     // Basic Statemanagement for the dashboard
     function menuToggle() {
         let menu = document.getElementById("navigation")
-        if (menu.classList.contains("hidden") == true){
-            menu.classList.remove("hidden")
-        }
-        else{
-            menu.classList.add("hidden")
-        }
+        menu.classList.toggle("hidden")
     }
 </script>

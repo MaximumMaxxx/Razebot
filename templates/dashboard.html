@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../static/css/main.css">
         <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
 </head>
-<body>
+<body class="bg-valoreddarker overflow-hidden">
     <!-- Top Bar -->
     <nav class="flex items-center bg-mainbg p-3 sticky top-0 z-50">
         <div class="flex items-center">
@@ -29,13 +29,17 @@
     </nav>
 
     <!-- Side bar similar to discord dev portal -->
-    <div id="sidebar" class="grid grid-cols-1 w-0 h-screen bg-black text-white transition-all lg:w-full">
-        <a name="MenuItem" href="/dashboard/{{guild_id}}/" class="hidden w-11/12 h-12 p-2 hover:bg-valored">General</a>
+    <div class="relative">
+        <div id="sidebar" class="absolute flex flex-col w-0 h-screen bg-black text-white transition-all lg:w-1/4 items-center overflow-y-hidden  z-10">
+            <a name="MenuItem" href="/dashboard/{{guild_id}}/" class="flex hidden w-11/12 h-12 p-2 hover:bg-valored rounded-lg items-center lg:flex transition-all">General</a>
+        </div>
+        <div class="flex flex-col items-center absolute bg-valoreddarker h-screen w-full lg:w-3/4 right-0">
+            <!-- Jinja stuff -->
+            {% for setting in settings %}
+            <h1 class="bg-black text-white w-11/12 h-20 font-bold p-2 rounded-lg m-3">{{setting}}</h1>
+            {% endfor %}
+        </div>
     </div>
-
-    <!-- Jinja for loop for the main body -->
-    <div class="bg-black w-4/5 right-0"></div>
-
 </body>
 </html>
 

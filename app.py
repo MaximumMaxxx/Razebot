@@ -1,5 +1,6 @@
 # Code largely stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
 from discord.ext import commands
+from quart.templating import Environment
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 from quart import Quart, redirect, url_for, render_template, request
 import mysql.connector
@@ -8,11 +9,10 @@ import os
 import requests
 
 from static.bot.cogs.secrets import secrets
-from static.bot.cogs.botRewrite import Razebot
-
+from static.bot.cogs.botRewrite import Razebot 
 app = Quart(__name__)
 
-DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbname"],password=secrets["dbpassword"],database=secrets["database"])
+DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbuname"],password=secrets["dbpassword"],database=secrets["database"])
 cursor = DB.cursor()
 
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
@@ -42,7 +42,7 @@ for i in CompTiers.json()["data"][0]["tiers"]:
 
 
 
-app.secret_key = secrets["websecuritykey"]
+app.secret_key = secrets["websecretkey"]
 
 # Remove this when going into production
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
@@ -80,12 +80,26 @@ async def callback():
 
 @app.route("/dashboard")
 async def dashboard():
-  return await render_template("dashboard.html")
+  return await render_template("dashboard.html", settings=["This is a setting", "This is a different setting"])
 
 @app.errorhandler(Unauthorized)
 async def redirect_unauthorized(e):
   bot.url = request.url
   return redirect(url_for(".login"))
+
+@app.route("/me/")
+@requires_authorization
+async def me():
+    user = await discordd.fetch_user()
+    return f"""
+    <html>
+        <head>
+            <title>{user.name}</title>
+        </head>
+        <body>
+            <img src='{user.avatar_url}' />
+        </body>
+    </html>"""
 
 def get_prefix(client, message):
   global cursor
@@ -107,5 +121,5 @@ def runWebOnly():
   app.run(host="localhost",port="6969",debug=True)
 
 if __name__ == "__main__":
-  #run()
-  runWebOnly()
+  run()
+  # #runWebOnly()

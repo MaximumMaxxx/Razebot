@@ -7,20 +7,20 @@ from discord.ext import commands
 import requests
 from PIL import ImageColor
 from asyncio import exceptions
-from app import CompTiers, valid_ranks
 import mysql.connector
 import math
 import asyncio
 
 # Local Imports
-from help_menus import help_menus, avaliable_help_menus, avaliable_settings
-from secrets import secrets
+from .helps import avaliable_help_menus, avaliable_settings
+from .secrets import secrets
+from ..Helper import CompTiers, valid_ranks
 
 
 # Welcome to self land the land of self. 
 class Razebot(commands.Bot):
 
-	def __init__(self, command_prefix=..., help_command=... , **options):
+	def __init__(self, command_prefix=">", help_command=None , **options):
 		super().__init__(command_prefix=command_prefix, help_command=help_command, **options)
 		self.DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbname"],password=secrets["dbpassword"],database=secrets["database"])
 		self.cursor = self.DB.cursor()
@@ -195,7 +195,7 @@ class Razebot(commands.Bot):
 		print(f"Left the server with the id {guild.id()}")
 
 	# Print out some info when pinged
-	@commands.Cog.listener
+	@commands.Cog.listener()
 	async def on_message(self,message):
 		if self.user.mentioned_in(message) and message.mention_everyone is False:
 			sql = f"SELECT * FROM set{message.guild.id}"
@@ -224,7 +224,7 @@ class Razebot(commands.Bot):
 	# ----------------------------------------------------------------------------------------------------------------------
 
 	# Credits
-	@commands.slash_command(name="Credits")
+	@commands.slash_command(name="credits",Required=False, description = "Some credits for the various resources that helped in the creation of this bot",pass_context=True)
 	@commands.command()
 	async def credits(self,ctx):
 		embed = discord.Embed(title = "Credits", description=None, url="https://Razebot.com/dashboard")
@@ -232,10 +232,10 @@ class Razebot(commands.Bot):
 		embed.add_field(name="Wrapper by",value="The Pycord development team")
 		embed.add_field(name="Design inspiration from",value="Discord developer portal, Mee6, Carl-bot, and many more.", )
 		embed.set_footer(text="Razebot by MaximumMaxx")
-		ctx.respond(embed=embed)
+		await ctx.respond(embed=embed)
 
 	# Changing the server specific settings
-	@commands.slash_command(name="Settings")
+	@commands.slash_command(name="settings")
 	@commands.command()
 	async def settings(self, ctx, setting, value):
 		if setting == None:
@@ -256,7 +256,7 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
 	
-	@commands.slash_command(name="Set roles", description="Set the role for each VALORANT comp rank")
+	@commands.slash_command(name="set roles", description="Set the role for each VALORANT comp rank")
 	@commands.command()
 	async def setroles(self, ctx, role: discord.role.Role = option(name="Role",Required=True), rank: str = option(name="Valorant Rank",Required=True)):
 		if rank.lower() in valid_ranks:
@@ -279,7 +279,7 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
 
-	@commands.slash_command(name = "Update Role", description = "Update your server role based on the ranks of the accounts saved in your myaccs list")
+	@commands.slash_command(name = "update role", description = "Update your server role based on the ranks of the accounts saved in your myaccs list")
 	@commands.command()
 	async def updaterole(self,ctx):
 		await ctx.respond("Thinking <:loading:something>")
@@ -342,7 +342,7 @@ class Razebot(commands.Bot):
 		msg = await ctx.interaction.original_message()  #gets the message from response
 		await msg.edit(embed=embed,content= None) #edits message from response
 
-	@commands.slash_command(name = "MyAccs", description = "Interact with the list of your account (accounts you actually own).")
+	@commands.slash_command(name = "myaccs", description = "Interact with the list of your account (accounts you actually own).")
 	@commands.command()
 	async def myaccs(self,ctx, 
 	operation: str = option(name="operation",Required=True), 
@@ -393,7 +393,7 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
 	
-	@commands.slash_command(name="Quick accounts", description = "Used to interact with the quick accounts database")
+	@commands.slash_command(name="quick accounts", description = "Used to interact with the quick accounts database")
 	@commands.command()
 	# More or less a 1 - 1 copy of myaccs
 	async def quickaccs(self,ctx,
@@ -444,15 +444,15 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
 
-	@commands.slash_command(name="Help",description = "Outputs a short description of how a command works and links to Razebot.com for further reading.")
+	@commands.slash_command(name="help",description = "Outputs a short description of how a command works and links to Razebot.com for further reading.")
 	@commands.command()
 	async def help(self,ctx,setting: str = option(avaliable_help_menus,None,required=False)):
 		setting = setting or None
 
 		if setting != None:
-			if setting in help_menus:
-				embed = discord.Embed(title = help_menus[setting][1], description = help_menus[setting][2], color = discord.Color.dark_green())
-				image = help_menus[setting][0]
+			if setting in avaliable_help_menus:
+				embed = discord.Embed(title = avaliable_help_menus[setting][1], description = avaliable_help_menus[setting][2], color = discord.Color.dark_green())
+				image = avaliable_help_menus[setting][0]
 			else:
 				image = "https://lh3.googleusercontent.com/proxy/_c_wrpevgis34jEBvd9uRPxYueZbavIRTtU9zNuZJ-FMRw-yo8XHX6n-tSeiJc7ZipzFB3snxw35LnIwCVrxku3cpoMAY1U"
 				embed =  embed = discord.Embed(title="Setting not found", description=f"/help for a general list of help menus" ,color=discord.Color.red())
@@ -559,6 +559,7 @@ class Razebot(commands.Bot):
 		ctx.respond(embed=self.get_acc(accounts,account_index))
 
 	@commands.command(name = "rcacc", description = "Get the stats for a specific VALORANT account")
+	@commands.slash_command(name = "Rank Check Account", description = "Get the stats for a specific VALORANT account")
 	async def rcacc(self, ctx, account: str = option(name="Account", description = "The VALORANT account you would like to check the rank of"), region: str = option(name="Region",description = f"The region the account is in. If not specified will default to the server's default region.")):
 		# The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
 		# Accounts is expected to be a list of tuples but you can just pass in a one item list and 0 and it acomplishes the same thing
