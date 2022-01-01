@@ -10,7 +10,7 @@ from asyncio import exceptions # Should already be included with pycord
 import mysql.connector #sql connection
 
 # Local Imports
-from help_menus import help_menus,avaliable_help_menus
+from static.bot.cogs.helps import help_menus,avaliable_help_menus
 from secrets import secrets
 
 
@@ -99,7 +99,7 @@ def Add_ACCS(user, type, ign, note):
         cursor.execute(sql,values)
         DB.commit()
         return("sucess")
- 
+
 def RmFrom_TB(user, type, ign):
     # S signifies a saved accounts table. M signifys a Myaccounts table
     sql = f'''select * from {type}{user} where ign like '{ign}';'''
