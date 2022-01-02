@@ -1,6 +1,5 @@
 # Code largely stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
 from discord.ext import commands
-from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 from quart import Quart, redirect, url_for, render_template, request
 import mysql.connector
 import time
@@ -50,7 +49,6 @@ app.config["DISCORD_CLIENT_ID"] = secrets["dscclientid"]
 app.config["DISCORD_CLIENT_SECRET"] = secrets["dscclientsecret"]
 app.config["DISCORD_REDIRECT_URI"] = secrets["dscredirecturi"]
 app.config["DISCORD_BOT_TOKEN"] = secrets["bottoken"]
-discordd = DiscordOAuth2Session(app)
 
 @app.route("/")
 async def home():
@@ -82,8 +80,8 @@ async def callback():
 async def dashboard():
   return await render_template("dashboard.html")
 
-@app.errorhandler(Unauthorized)
-async def redirect_unauthorized(e):
+#@app.errorhandler(Unauthorized)
+#async def redirect_unauthorized(e):
   bot.url = request.url
   return redirect(url_for(".login"))
 
