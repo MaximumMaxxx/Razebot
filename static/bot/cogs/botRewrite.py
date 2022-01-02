@@ -10,7 +10,7 @@ from PIL import ImageColor
 import mysql.connector
 
 from .helps import avaliable_help_menus, avaliable_settings
-from .secrets import secrets
+from .secrets import Secrets
 from ..Helper import CompTiers, valid_ranks
 
 
@@ -19,7 +19,7 @@ class Razebot(commands.Bot):
 
 	def __init__(self, command_prefix=">", help_command=None , **options):
 		super().__init__(command_prefix=command_prefix, help_command=help_command, **options)
-		self.DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbname"],password=secrets["dbpassword"],database=secrets["database"])
+		self.DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbname"],password=Secrets["dbpassword"],database=Secrets["database"])
 		self.cursor = self.DB.cursor()
 
 		self.default_prefix = ">"
@@ -37,7 +37,7 @@ class Razebot(commands.Bot):
 	def refresh(self):
 		if time.time() > self.refresh_time:
 			self.DB.close()
-			self.DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbname"],password=secrets["dbpassword"],database=secrets["database"])
+			self.DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbname"],password=Secrets["dbpassword"],database=Secrets["database"])
 			self.cursor = self.DB.cursor()
 			print("Refreshed")
 		self.refresh_time = time.time()+self.timeout_time

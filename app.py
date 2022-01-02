@@ -7,15 +7,14 @@ import os
 
 from discord.ext import commands
 from quart.helpers import make_response
-from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 from quart import Quart, redirect, url_for, render_template, request
 import requests
 
-from secrets import secrets
+from .static.bot.cogs.secrets import Secrets 
 # from static.bot.cogs.botRewrite import Razebot 
 app = Quart(__name__)
 
-DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbuname"],password=secrets["dbpassword"],database=secrets["database"])
+DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbuname"],password=Secrets["dbpassword"],database=Secrets["database"])
 cursor = DB.cursor()
 
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
@@ -28,7 +27,7 @@ def refresh():
     global cursor
     if time.time() > refresh_time:
         DB.close()
-        DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbname"],password=secrets["dbpassword"],database=secrets["database"])
+        DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbname"],password=Secrets["dbpassword"],database=Secrets["database"])
         cursor = DB.cursor()
         print("Refreshed")
     refresh_time = time.time()+timeout_time
@@ -45,14 +44,14 @@ for i in CompTiers.json()["data"][0]["tiers"]:
 
 
 
-app.secret_key = secrets["websecretkey"]
+app.secret_key = Secrets["websecretkey"]
 
 # Remove this when going into production
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
-app.config["DISCORD_CLIENT_ID"] = secrets["dscclientid"]
-app.config["DISCORD_CLIENT_SECRET"] = secrets["dscclientsecret"]
-app.config["DISCORD_REDIRECT_URI"] = secrets["dscredirecturi"]
-app.config["DISCORD_BOT_TOKEN"] = secrets["bottoken"]
+app.config["DISCORD_CLIENT_ID"] = Secrets["dscclientid"]
+app.config["DISCORD_CLIENT_SECRET"] = Secrets["dscclientsecret"]
+app.config["DISCORD_REDIRECT_URI"] = Secrets["dscredirecturi"]
+app.config["DISCORD_BOT_TOKEN"] = Secrets["bottoken"]
 
 @app.route("/")
 async def home():
@@ -151,7 +150,7 @@ bot = commands.Bot(command_prefix=(get_prefix), description="Razebot, the ultima
 def run():
   bot.loop.create_task(app.run_task(host="localhost",port="6969",debug=True))
   bot.add_cog(Razebot(bot))
-  bot.run(secrets["bottoken"])
+  bot.run(Secrets["bottoken"])
 
 def runWebOnly():
   app.run(host="0.0.0.0",port="6969",debug=True)
