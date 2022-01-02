@@ -1,19 +1,16 @@
+import math
+import asyncio
 import time
-from typing_extensions import Required
+
 import discord
-from discord import message
 from discord.commands import option
 from discord.ext import commands
 import requests
 from PIL import ImageColor
-from asyncio import exceptions
 import mysql.connector
-import math
-import asyncio
 
-# Local Imports
 from .helps import avaliable_help_menus, avaliable_settings
-from .secrets import secrets
+from ....secrets import secrets
 from ..Helper import CompTiers, valid_ranks
 
 
@@ -151,6 +148,7 @@ class Razebot(commands.Bot):
 	async def on_ready(self):
 		print("Cog is up")
 
+
 	# Setup a server's initial sql tables
 	@commands.Cog.listener()
 	async def on_guild_join(self,guild):
@@ -181,10 +179,10 @@ class Razebot(commands.Bot):
 		sql = f"REPLACE INTO set{guild.id} (setting,value) VALUES (max_self_role,None)"
 		self.cursor.execute(sql)
 
-
 		self.DB.commit()
 		# Maybe remove before final release
 		print(f"Joined a server with the id {guild.id()}")
+
 
 	# Remove a server's prefix and settings data when the bot leaves the server
 	@commands.Cog.listener()
@@ -193,6 +191,7 @@ class Razebot(commands.Bot):
 		self.cursor.execute(sql)
 		self.DB.commit()
 		print(f"Left the server with the id {guild.id()}")
+
 
 	# Print out some info when pinged
 	@commands.Cog.listener()
@@ -218,15 +217,13 @@ class Razebot(commands.Bot):
 
 		await self.process_commands(message) # This line makes your other commands work.
 
-
 	# ----------------------------------------------------------------------------------------------------------------------
 	# Commands
 	# ----------------------------------------------------------------------------------------------------------------------
 
-	# Credits
-	@commands.slash_command(name="credits",Required=False, description = "Some credits for the various resources that helped in the creation of this bot",pass_context=True)
+	@commands.slash_command(name="credits")
 	@commands.command()
-	async def credits(self,ctx):
+	async def credits(self,ctx: discord.context):
 		embed = discord.Embed(title = "Credits", description=None, url="https://Razebot.com/dashboard")
 		embed.add_field(name="Loading Icon by",value="Krishprakash24gmail via Wikicommons under CC Atribution-sharalike 4.0 International")
 		embed.add_field(name="Wrapper by",value="The Pycord development team")
@@ -234,10 +231,10 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		await ctx.respond(embed=embed)
 
-	# Changing the server specific settings
+
 	@commands.slash_command(name="settings")
 	@commands.command()
-	async def settings(self, ctx, setting, value):
+	async def settings(self, ctx: discord.context, setting: str, value: str):
 		if setting == None:
 			if setting.lower() in avaliable_settings:
 				self.refresh()
@@ -255,7 +252,8 @@ class Razebot(commands.Bot):
 		
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
-	
+
+
 	@commands.slash_command(name="set roles", description="Set the role for each VALORANT comp rank")
 	@commands.command()
 	async def setroles(self, ctx, role: discord.role.Role = option(name="Role",Required=True), rank: str = option(name="Valorant Rank",Required=True)):
@@ -278,6 +276,7 @@ class Razebot(commands.Bot):
 	
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
+
 
 	@commands.slash_command(name = "update role", description = "Update your server role based on the ranks of the accounts saved in your myaccs list")
 	@commands.command()
@@ -342,6 +341,7 @@ class Razebot(commands.Bot):
 		msg = await ctx.interaction.original_message()  #gets the message from response
 		await msg.edit(embed=embed,content= None) #edits message from response
 
+
 	@commands.slash_command(name = "myaccs", description = "Interact with the list of your account (accounts you actually own).")
 	@commands.command()
 	async def myaccs(self,ctx, 
@@ -392,7 +392,8 @@ class Razebot(commands.Bot):
 
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
-	
+
+
 	@commands.slash_command(name="quick accounts", description = "Used to interact with the quick accounts database")
 	@commands.command()
 	# More or less a 1 - 1 copy of myaccs
@@ -444,6 +445,7 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		ctx.respond(embed=embed)
 
+
 	@commands.slash_command(name="help",description = "Outputs a short description of how a command works and links to Razebot.com for further reading.")
 	@commands.command()
 	async def help(self,ctx,setting: str = option(avaliable_help_menus,None,required=False)):
@@ -465,10 +467,7 @@ class Razebot(commands.Bot):
 		embed.set_footer(text="Razebot by MaximumMaxx")
 		await ctx.respond(embed = embed)
 
-	# Chloes bets RC will be 75 lines
-	# I bet RC will be 100 lines
 
-	# I don't think this is 
 	@commands.command( name="rclist", description = "Check the Rank of an account from either your Quick accounts or My accounts list")
 	@commands.slash_command( name="Rank Check List", description = "Check the Rank of an account from either your Quick accounts or My accounts list")
 	async def rclist(self, ctx, list: str = option(name="List", description = "The list that you want to pull the accounts from. (my | quick)", Required=True)):
@@ -557,6 +556,7 @@ class Razebot(commands.Bot):
 				return
 				# ending the loop if user doesn't react after x seconds
 		ctx.respond(embed=self.get_acc(accounts,account_index))
+
 
 	@commands.command(name = "rcacc", description = "Get the stats for a specific VALORANT account")
 	@commands.slash_command(name = "Rank Check Account", description = "Get the stats for a specific VALORANT account")

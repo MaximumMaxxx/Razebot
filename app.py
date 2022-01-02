@@ -1,17 +1,16 @@
 # Code largely stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
+import mysql.connector
+import time
+import os
+
 from discord.ext import commands
 from quart.helpers import make_response
 from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 from quart import Quart, redirect, url_for, render_template, request
-import mysql.connector
-import time
-import os
 import requests
 
-
-
-from static.bot.cogs.secrets import secrets
-from static.bot.cogs.botRewrite import Razebot 
+from secrets import secrets
+# from static.bot.cogs.botRewrite import Razebot 
 app = Quart(__name__)
 
 DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbuname"],password=secrets["dbpassword"],database=secrets["database"])
@@ -102,8 +101,8 @@ async def dashboard(guild):
     # For text input it's ["string","name","default value"]
 
     ["select","Region",[["NA",""],["EU","default"]]], 
-    ["string","Prefix",">"]
-    ],logged_in=[True,user.avatar_url,user.name]
+    ["string","Prefix",">"]]
+    ,logged_in=[True,user.avatar_url,user.name]
     )
 
 @app.errorhandler(Unauthorized)
@@ -157,5 +156,5 @@ def runWebOnly():
   app.run(host="0.0.0.0",port="6969",debug=True)
 
 if __name__ == "__main__":
-  run()
-  # runWebOnly()
+  # run()
+  runWebOnly()
