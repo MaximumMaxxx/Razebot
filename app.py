@@ -4,14 +4,18 @@ from quart import Quart, redirect, url_for, render_template, request
 import mysql.connector
 import time
 import os
+
+from discord.ext import commands
+from quart.helpers import make_response
+from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
+from quart import Quart, redirect, url_for, render_template, request
 import requests
 
-from static.bot.cogs.secrets import secrets
-from static.bot.cogs.botRewrite import Razebot
-
+from secrets import secrets
+# from static.bot.cogs.botRewrite import Razebot 
 app = Quart(__name__)
 
-DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbname"],password=secrets["dbpassword"],database=secrets["database"])
+DB = mysql.connector.connect(host=secrets["dbhost"],user=secrets["dbuname"],password=secrets["dbpassword"],database=secrets["database"])
 cursor = DB.cursor()
 
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
@@ -41,7 +45,7 @@ for i in CompTiers.json()["data"][0]["tiers"]:
 
 
 
-app.secret_key = secrets["websecuritykey"]
+app.secret_key = secrets["websecretkey"]
 
 # Remove this when going into production
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
@@ -56,7 +60,9 @@ async def home():
   balance = 0
   if await discordd.authorized:
     logged = True
-  return await render_template("index.html", logged=logged, discord_url="/dashboard")
+    user = await discordd.fetch_user()
+    return await render_template("index.html", logged=logged, discord_url="/serverselect", logged_in=[True,user.avatar_url,user.name])
+  return await render_template("index.html", logged=logged, discord_url="/serverselect", logged_in=[False])
 
 
 @app.route("/login/")
@@ -71,19 +77,67 @@ async def logout():
 @app.route("/callback/")
 async def callback():
   await discordd.callback()
-  try:
-    return redirect(bot.url)
-  except:
-    return redirect(url_for(".me"))
+  return redirect(url_for(".home"))
 
-@app.route("/dashboard")
-async def dashboard():
-  return await render_template("dashboard.html")
+@app.route("/serverselect")
+@requires_authorization
+async def serverselect():
+  user = await discordd.fetch_user()
+  # Big ol list comprehension that produces a list of lists with the icon, name, and ownership status, and if the bot is the server for each server the user is in but only if they have the ability to add bots
+  if await discordd.authorized:
+    logged = True
+    user = await discordd.fetch_user()
+    return await render_template("select.html",servers=[[guild.icon_url,guild.name,guild.is_owner,guild.id,True if guild.id in bot.guilds else False] for guild in await user.fetch_guilds() if int(guild.permissions.value) & 1 << 5 or int(guild.permissions.value) & 1 << 3], logged_in=[True,user.avatar_url,user.name])
+  return await render_template("select.html",servers=[[guild.icon_url,guild.name,guild.is_owner,guild.id,True if guild.id in bot.guilds else False] for guild in await user.fetch_guilds() if int(guild.permissions.value) & 1 << 5 or int(guild.permissions.value) & 1 << 3], logged_in = [False])
+
+@app.route("/<guild>/dashboard")
+@requires_authorization
+async def dashboard(guild):
+  # Settings is formatted like
+  user = await discordd.fetch_user()
+  return await render_template("dashboard.html", settings=[
+    # The formatting here is important
+    # * means can be repeated as many times as you wants
+    # For the select is setup like ["select","Name/address it will be posted to", [*["Select option","nothing or default"]]]
+    # For text input it's ["string","name","default value"]
+
+    ["select","Region",[["NA",""],["EU","default"]]], 
+    ["string","Prefix",">"]]
+    ,logged_in=[True,user.avatar_url,user.name]
+    )
 
 #@app.errorhandler(Unauthorized)
 #async def redirect_unauthorized(e):
   bot.url = request.url
   return redirect(url_for(".login"))
+
+# Temp route for testing
+@app.route("/me/")
+@requires_authorization
+async def me():
+    user = await discordd.fetch_user()
+    return f"""
+    <html>
+        <head>
+            <title>{user.name}</title>
+        </head>
+        <body>
+            <img src='{user.avatar_url}' />
+        </body>
+    </html>"""
+
+@app.route("/setting/<string:setting>",methods=["POST"])
+@requires_authorization
+async def setting(setting):
+  if request.method == "POST":
+    if setting == "all": headers = {}
+    return await make_response(
+      200,
+      )
+
+@app.route("/support")
+async def support():
+  return await render_template("imagine.html", route = "Support page")
 
 def get_prefix(client, message):
   global cursor
@@ -92,18 +146,16 @@ def get_prefix(client, message):
   cursor.execute(sql)
   return cursor.fetchall()
 
-
-
-bot = commands.Bot(command_prefix=(get_prefix), description="Simple economy bot", help_command=None)
+bot = commands.Bot(command_prefix=(get_prefix), description="Razebot, the ultimate discord bot for VALORANT", help_command=None)
 
 def run():
-  bot.loop.create_task(app.run_task('0.0.0.0'))
+  bot.loop.create_task(app.run_task(host="localhost",port="6969",debug=True))
   bot.add_cog(Razebot(bot))
   bot.run(secrets["bottoken"])
 
 def runWebOnly():
-  app.run(host="localhost",port="6969",debug=True)
+  app.run(host="0.0.0.0",port="6969",debug=True)
 
 if __name__ == "__main__":
-  #run()
+  # run()
   runWebOnly()

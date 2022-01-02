@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server select</title>
+    <link rel="stylesheet" href="../static/css/main.css">
+    <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
+</head>
+<body class="">
+    {% import 'macros.html' as macros %}
+    
+    {{ macros.topdropdownmenu(logged_in) }}
+    <!-- Wrapper for main -->
+    <div class="flex flex-col bg-black items-center !overflow-scroll pb-4 h-screen justify-center">
+        <span>Which server's dashboard do you want to access</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for server in servers %}
+            <a href="{{server[3]}}/dashboard" class="flex w-80 h-40 text-white border-valored border-2 rounded-lg gap-2 bg-black items-center hover:bg-valoreddarker transition p-4 flex-col">
+                <span class="text-lg font-bold">{{server[1]}}</span>
+                <img src="{{server[0]}}" alt="Server icon for {{server[1]}}" class="w-16 h-16 rounded-full border-white border-4 bg-black">
+                {% if server[2] %}
+                <span>Owner</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {{ macros.footer() }}
+</body>
+</html>
