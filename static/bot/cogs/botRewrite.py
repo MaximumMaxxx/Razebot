@@ -9,17 +9,29 @@ import requests
 from PIL import ImageColor
 import mysql.connector
 
-from .helps import avaliable_help_menus, avaliable_settings
-from .secrets import Secrets
+from secrets.secrets import Secrets
 from ..Helper import CompTiers, valid_ranks
 
+# Command:[ImageLink,title,description]
+help_menus = {
+"rc":["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png","Rank Check", f"Allows you to check the rank of any player. Usage: the base command is '>rc'. If no account is specified it will pull from your quick accounts list. If you ping someone, it will pull from their accounts list. If you put a username like 'rc name#tag' it will check that player's rank. Finally you can add a region like 'na' if the person is in a different region than the server owner has set."],
+"quickaccs":["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png","Quick Accounts",f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
+"myaccs":["https://pngimg.com/uploads/smurf/smurf_PNG34.png","My accounts",f"A command to interact with a database of saved quick accounts. My accounts is used to manage a list of accounts you own. Syntax: All uses start with >myaccs followed by something. To view a list of your saved accounts use '>myaccs'. To add an account use '>myaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>myaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
+"updaterole":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005",">updaterole",f"A command to automatically update your role based on what accounts you have linked to >myaccs."],
+"quick vs myaccs":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Quick accounts Vs My Accounts",f"The distinction between quickaccs and myaccs is a small but important one. myaccs is a list of all accounts you personally own. myaccs is thus pulled from in a situation where you are the subject, the prime examples of these are rank updating, and when you're pinged for a rank check. constrasting that is quickaccs. quickaccs is a list of accounts you want to check without having to memorize tags, this might be a friend's account, or it might be a youtuber's account. You can put whatever accounts you want in quickaccs and it won't affect anything"],
+"settings":["https://static.thenounproject.com/png/1524589-200.png","settings",f"Allows you to change the settings for the bot. formatting: '>settings setting:value' use '>settings list' for a list of avaliable settings"],
+"setroles":["https://static.wikia.nocookie.net/valorant/images/7/7f/TX_CompetitiveTier_Large_3.png/revision/latest/scale-to-width-down/250?cb=20200623203005","Set roles",f"Allows you to set the roles for each rank. All ranks must be set before updateroles or rankcheck can be used. Format: '>setroles role:@role' note: you may have to add a space, type the @, then remove the space. The command will also tell you what role links you are missing."]
+}
+avaliable_help_menus = ["rc","quickaccs","myaccs","updaterole","quick vs myaccs","settings","setroles"]
+
+avaliable_settings = ["region","prefix"]
 
 # Welcome to self land the land of self. 
 class Razebot(commands.Bot):
 
 	def __init__(self, command_prefix=">", help_command=None , **options):
 		super().__init__(command_prefix=command_prefix, help_command=help_command, **options)
-		self.DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbname"],password=Secrets["dbpassword"],database=Secrets["database"])
+		self.DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbuname"],password=Secrets["dbpassword"],database=Secrets["database"])
 		self.cursor = self.DB.cursor()
 
 		self.default_prefix = ">"
@@ -222,7 +234,6 @@ class Razebot(commands.Bot):
 	# ----------------------------------------------------------------------------------------------------------------------
 
 	@commands.slash_command(name="credits")
-	@commands.command()
 	async def credits(self,ctx: discord.context):
 		embed = discord.Embed(title = "Credits", description=None, url="https://Razebot.com/dashboard")
 		embed.add_field(name="Loading Icon by",value="Krishprakash24gmail via Wikicommons under CC Atribution-sharalike 4.0 International")
@@ -233,7 +244,6 @@ class Razebot(commands.Bot):
 
 
 	@commands.slash_command(name="settings")
-	@commands.command()
 	async def settings(self, ctx: discord.context, setting: str, value: str):
 		if setting == None:
 			if setting.lower() in avaliable_settings:
@@ -254,9 +264,8 @@ class Razebot(commands.Bot):
 		ctx.respond(embed=embed)
 
 
-	@commands.slash_command(name="set roles", description="Set the role for each VALORANT comp rank")
-	@commands.command()
-	async def setroles(self, ctx, role: discord.role.Role = option(name="Role",Required=True), rank: str = option(name="Valorant Rank",Required=True)):
+	@commands.slash_command(name="setroles", description="Set the role for each VALORANT comp rank")
+	async def setroles(self, ctx, role: discord.role.Role = option(name="role",Required=True), rank: str = option(name="valorant rank",Required=True)):
 		if rank.lower() in valid_ranks:
 			self.refresh()
 			# There should already be a settings table created when the bot first joined so we can just acess it here
@@ -278,8 +287,7 @@ class Razebot(commands.Bot):
 		ctx.respond(embed=embed)
 
 
-	@commands.slash_command(name = "update role", description = "Update your server role based on the ranks of the accounts saved in your myaccs list")
-	@commands.command()
+	@commands.slash_command(name = "updaterole", description = "Update your server role based on the ranks of the accounts saved in your myaccs list")
 	async def updaterole(self,ctx):
 		await ctx.respond("Thinking <:loading:something>")
 		self.refresh()
@@ -343,7 +351,6 @@ class Razebot(commands.Bot):
 
 
 	@commands.slash_command(name = "myaccs", description = "Interact with the list of your account (accounts you actually own).")
-	@commands.command()
 	async def myaccs(self,ctx, 
 	operation: str = option(name="operation",Required=True), 
 	account: str = option(name="account",Required=False, description = "Formatted as name#tag"),
@@ -394,8 +401,7 @@ class Razebot(commands.Bot):
 		ctx.respond(embed=embed)
 
 
-	@commands.slash_command(name="quick accounts", description = "Used to interact with the quick accounts database")
-	@commands.command()
+	@commands.slash_command(name="quickaccounts", description = "Used to interact with the quick accounts database")
 	# More or less a 1 - 1 copy of myaccs
 	async def quickaccs(self,ctx,
 	operation: str = option(name="operation",Required=True), 
@@ -447,7 +453,6 @@ class Razebot(commands.Bot):
 
 
 	@commands.slash_command(name="help",description = "Outputs a short description of how a command works and links to Razebot.com for further reading.")
-	@commands.command()
 	async def help(self,ctx,setting: str = option(avaliable_help_menus,None,required=False)):
 		setting = setting or None
 
@@ -468,8 +473,7 @@ class Razebot(commands.Bot):
 		await ctx.respond(embed = embed)
 
 
-	@commands.command( name="rclist", description = "Check the Rank of an account from either your Quick accounts or My accounts list")
-	@commands.slash_command( name="Rank Check List", description = "Check the Rank of an account from either your Quick accounts or My accounts list")
+	@commands.slash_command( name="rankchecklist", description = "Check the Rank of an account from either your Quick accounts or My accounts list")
 	async def rclist(self, ctx, list: str = option(name="List", description = "The list that you want to pull the accounts from. (my | quick)", Required=True)):
 		self.refresh()
 		list = list.lower()
@@ -558,8 +562,7 @@ class Razebot(commands.Bot):
 		ctx.respond(embed=self.get_acc(accounts,account_index))
 
 
-	@commands.command(name = "rcacc", description = "Get the stats for a specific VALORANT account")
-	@commands.slash_command(name = "Rank Check Account", description = "Get the stats for a specific VALORANT account")
+	@commands.slash_command(name = "rankcheckaccount", description = "Get the stats for a specific VALORANT account")
 	async def rcacc(self, ctx, account: str = option(name="Account", description = "The VALORANT account you would like to check the rank of"), region: str = option(name="Region",description = f"The region the account is in. If not specified will default to the server's default region.")):
 		# The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
 		# Accounts is expected to be a list of tuples but you can just pass in a one item list and 0 and it acomplishes the same thing

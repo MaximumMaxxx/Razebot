@@ -8,10 +8,11 @@ import os
 from discord.ext import commands
 from quart.helpers import make_response
 from quart import Quart, redirect, url_for, render_template, request
+from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 import requests
 
-from .static.bot.cogs.secrets import Secrets 
-# from static.bot.cogs.botRewrite import Razebot 
+from secrets.secrets import Secrets
+from static.bot.cogs.botRewrite import Razebot 
 app = Quart(__name__)
 
 DB = mysql.connector.connect(host=Secrets["dbhost"],user=Secrets["dbuname"],password=Secrets["dbpassword"],database=Secrets["database"])
@@ -20,7 +21,7 @@ cursor = DB.cursor()
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
 timeout_time = 2700
 refresh_time = time.time() + timeout_time
-
+##  
 def refresh():
     global refresh_time
     global DB
@@ -52,6 +53,8 @@ app.config["DISCORD_CLIENT_ID"] = Secrets["dscclientid"]
 app.config["DISCORD_CLIENT_SECRET"] = Secrets["dscclientsecret"]
 app.config["DISCORD_REDIRECT_URI"] = Secrets["dscredirecturi"]
 app.config["DISCORD_BOT_TOKEN"] = Secrets["bottoken"]
+
+discordd = DiscordOAuth2Session(app)
 
 @app.route("/")
 async def home():
@@ -105,28 +108,12 @@ async def dashboard(guild):
     ,logged_in=[True,user.avatar_url,user.name]
     )
 
-#@app.errorhandler(Unauthorized)
-#async def redirect_unauthorized(e):
+@app.errorhandler(Unauthorized)
+async def redirect_unauthorized(e):
   bot.url = request.url
   return redirect(url_for(".login"))
 
-# Temp route for testing
-@app.route("/me/")
-@requires_authorization
-async def me():
-    user = await discordd.fetch_user()
-    return f"""
-    <html>
-        <head>
-            <title>{user.name}</title>
-        </head>
-        <body>
-            <img src='{user.avatar_url}' />
-        </body>
-    </html>"""
-
 @app.route("/setting/<string:setting>",methods=["POST"])
-@requires_authorization
 async def setting(setting):
   if request.method == "POST":
     if setting == "all": headers = {}
@@ -145,16 +132,15 @@ def get_prefix(client, message):
   cursor.execute(sql)
   return cursor.fetchall()
 
-bot = commands.Bot(command_prefix=(get_prefix), description="Razebot, the ultimate discord bot for VALORANT", help_command=None)
+bot = Razebot(command_prefix=(get_prefix), description="Razebot, the ultimate discord bot for VALORANT", help_command=None)
 
 def run():
   bot.loop.create_task(app.run_task(host="localhost",port="6969",debug=True))
-  bot.add_cog(Razebot(bot))
   bot.run(Secrets["bottoken"])
 
 def runWebOnly():
   app.run(host="0.0.0.0",port="6969",debug=True)
 
 if __name__ == "__main__":
-  # run()
-  runWebOnly()
+  run()
+  # runWebOnly()
