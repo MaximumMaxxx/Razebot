@@ -1,4 +1,7 @@
-Pillow>=8.4.0
-requests>=2.26.0
-mysql-connector-python==8.0.27
-quart>=0.16.2
+Pillow
+requests
+SQLAlchemy
+quart
+git+https://github.com/MaximumMaxxx/Cordless-Quart-Discord
+git+https://github.com/Pycord-Development/pycord
+Quart-Csrf
