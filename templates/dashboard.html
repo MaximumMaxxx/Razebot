@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <!-- This whole page is somewhat styled after the Discord Dev Portal mixed with mee6 and Carl Bot dashboards so credit to the designers that made those -->
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -9,15 +10,20 @@
     <link rel="stylesheet" href="../static/css/main.css">
     <link rel="icon" href="../static/images/Razeboticon.ico" type="image/x-icon">
 </head>
+
 <body class="bg-valoreddarker overflow-hidden">
     {% import 'macros.html' as macros %}
     <!-- Top Bar -->
     <nav class="flex items-center bg-mainbg p-3 sticky top-0 z-50">
         <div class="flex items-center">
-            <button aria-label="Button for opening the navigation menu" class="inline-flex p-3 hover:bg-valoreddarker rounded lg:hidden ml-auto transition-width duration-200 ease-in-out text-white" onclick="menuToggle()">
+            <button aria-label="Button for opening the navigation menu"
+                class="inline-flex p-3 hover:bg-valoreddarker rounded lg:hidden ml-auto transition-width duration-200 ease-in-out text-white"
+                onclick="menuToggle()">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                </svg>        
+                    <path fill-rule="evenodd"
+                        d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                        clip-rule="evenodd" />
+                </svg>
             </button>
             <a href="/" class="p-2 mr-4 inline-flex items-center rounded-lg">
                 <img src="../static/images/Valobot logo raze thicckened.png" alt="Logo" class="h-10 mr-4">
@@ -33,32 +39,38 @@
 
     <!-- Side bar similar to discord dev portal -->
     <div class="relative h-screen">
-        <div id="sidebar" class="absolute flex flex-col w-0 h-full bg-black text-white transition-all lg:!w-1/4 items-center overflow-y-hidden z-10">
+        <div id="sidebar"
+            class="absolute flex flex-col w-0 h-full bg-black text-white transition-all lg:!w-1/4 items-center overflow-y-hidden z-10">
             <!-- Tailwind don't like it when you have flex and hidden but that's currect here since the hidden gets toggled -->
-            <a name="MenuItem" href="/dashboard/{{guild_id}}/" class="flex hidden w-11/12 h-12 p-2 hover:bg-valored rounded-lg items-center lg:flex transition-all">General</a>
+            <a name="MenuItem" href="/dashboard/{{guild_id}}/"
+                class="flex hidden w-11/12 h-12 p-2 hover:bg-valored rounded-lg items-center lg:flex transition-all">General</a>
         </div>
         <div class="flex flex-col items-center absolute bg-valoreddarker h-screen w-full lg:w-3/4 right-0">
             <!-- Jinja stuff -->
             {% for setting in settings %}
-            <div class="flex flex-row items-center w-11/12 bg-black text-white h-20 font-bold p-2 rounded-lg m-3 text-lg">
+            <div
+                class="flex flex-row items-center w-11/12 bg-black text-white h-20 font-bold p-2 rounded-lg m-3 text-lg">
                 <h1 class="w-min mr-auto text-4xl text-white">{{setting[1]}}</h1>
                 <form action="/setting/{{setting[1]}}" method="post" class="flex flex-row gap-4 h-full">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     {% if setting[0] == "select" %}
-                    <select class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all">
+                    <select
+                        class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all">
                         {% for value in setting[2] %}
-                        
+
                         {% if value[1] == 'default' %}
                         <option value="{{value[0]}}" selected>{{value[0]}}</option>
                         {% else %}
                         <option value="{{value[0]}}">{{value[0]}}</option>
                         {% endif %}
-                        
+
                         {% endfor %}
                     </select>
                     {% endif %}
 
                     {% if setting[0] == "string" %}
-                    <input type="text" value="{{setting[2]}}" class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all">
+                    <input type="text" value="{{setting[2]}}"
+                        class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all">
                     {% endif %}
 
                     <button type="submit">Apply</button>
@@ -69,6 +81,7 @@
     </div>
     {{ macros.footer() }}
 </body>
+
 </html>
 
 <script>

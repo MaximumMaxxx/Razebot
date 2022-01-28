@@ -1,19 +1,24 @@
 {% macro profile(logged_in) %}
 {% if logged_in[0] %}
 <!-- Only rendered if you're logged in -->
-<div class="relative flex flex-col gap-1 text-white ml-2 hover:bg-valoreddarker transition-all px-2 py-2 rounded lg:ml-auto">
+<div
+    class="relative flex flex-col gap-1 text-white ml-2 hover:bg-valoreddarker transition-all px-2 py-2 rounded lg:ml-auto">
     <button onclick="profileToggle()" class="flex flex-row">
-        <img src="{{logged_in[1]}}" alt="Profile picture" class="rounded-full h-7 w-7 mr-4 border-white border-2 bg-black">
+        <img src="{{logged_in[1]}}" alt="Profile picture"
+            class="rounded-full h-7 w-7 mr-4 border-white border-2 bg-black">
         <span class="font-semibold hidden sm:block">{{logged_in[2]}}</span>
     </button>
-    <div name = "profile" class="absolute top-11 right-[0px] flex flex-col transition-all duration-300 h-0 rounded-lg border-transparent border-2 bg-transparent p-2 w-28 sm:w-full">
+    <div name="profile"
+        class="absolute top-11 right-[0px] flex flex-col transition-all duration-300 h-0 rounded-lg border-transparent border-2 bg-transparent p-2 w-28 sm:w-full">
         <a name="profileitem" class="hidden hover:bg-valoreddarker rounded w-full p-1" href="/logout">Signout</a>
         <a name="profileitem" class="hidden hover:bg-valoreddarker rounded w-full p-1" href="/me">Profile</a>
-        <a name="profileitem" class="hidden hover:bg-valoreddarker rounded w-full p-1" href="/serverselect">Dashboard</a>
+        <a name="profileitem" class="hidden hover:bg-valoreddarker rounded w-full p-1"
+            href="/serverselect">Dashboard</a>
     </div>
-</div>  
+</div>
 {% else %}
-<a href="/login" class=" px-2 py-2 bg-black hover:bg-valoreddarker text-lg transition-all rounded text-white ml-auto lg:ml-auto">Login</a>
+<a href="/login"
+    class=" px-2 py-2 bg-black hover:bg-valoreddarker text-lg transition-all rounded text-gray-400 hover:text-white ml-auto lg:ml-auto">Login</a>
 {% endif %}
 <script>
     function profileToggle() {
@@ -23,18 +28,18 @@
             element.classList.toggle("h-32");
             element.classList.toggle("!bg-black")
             setTimeout(lambda => {
-            element.classList.toggle("!border-valored");
-        },70);
+                element.classList.toggle("!border-valored");
+            }, 70);
         });
-        
 
-        
+
+
         let profileitems = document.getElementsByName("profileitem");
         let i = 1;
         profileitems.forEach(element => {
             setTimeout(lambda => {
                 element.classList.toggle("hidden");
-            },20*i);
+            }, 20 * i);
             i += 1;
         });
     }
@@ -50,10 +55,14 @@
             Razebot
         </span>
     </a>
-    <button class="inline-flex p-3 hover:bg-valoreddarker rounded lg:hidden ml-auto transition ease-in-out duration-100 text-white" onclick="menuToggle()">
+    <button
+        class="inline-flex p-3 hover:bg-valoreddarker rounded lg:hidden ml-auto transition ease-in-out duration-100 text-white"
+        onclick="menuToggle()">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-        </svg>        
+            <path fill-rule="evenodd"
+                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clip-rule="evenodd" />
+        </svg>
     </button>
     <!-- Very janky solution but it makes the profile thing always on the right sooo -->
     <div class="lg:hidden">
@@ -62,13 +71,16 @@
 
     <div class="hidden w-full lg:inline-flex lg:w-max lg:flex-grow" id="navigation">
         <div class="lg:inline-flex lg:flex-row lg:w-auto lg:items-center flex flex-col lg:ml-auto">
-            <a href="{{discord_url}}" class="transition-all lg:inline-flex lg:w-auto px-3 py-2 rounded text-gray-400 hover:text-white hover:bg-valoreddarker">
+            <a href="{{discord_url}}"
+                class="transition-all lg:inline-flex lg:w-auto px-3 py-2 rounded text-gray-400 hover:text-white hover:bg-valoreddarker">
                 <span>Dashboard</span>
             </a>
-            <a href="/support" class="transition-all lg:inline-flex lg:w-auto px-3 py-2 rounded text-gray-400 hover:text-white hover:bg-valoreddarker">
+            <a href="/support"
+                class="transition-all lg:inline-flex lg:w-auto px-3 py-2 rounded text-gray-400 hover:text-white hover:bg-valoreddarker">
                 <span>Support Discord</span>
             </a>
-            <a href="https://github.com/MaximumMaxxx/Razebot" class="transition-all lg:inline-flex lg:w-auto px-3 py-2 rounded text-gray-400 hover:text-white hover:bg-valoreddarker">
+            <a href="https://github.com/MaximumMaxxx/Razebot"
+                class="transition-all lg:inline-flex lg:w-auto px-3 py-2 rounded text-gray-400 hover:text-white hover:bg-valoreddarker">
                 <span>Source Code</span>
             </a>
             <div class="hidden lg:block">
@@ -77,7 +89,7 @@
         </div>
     </div>
 </nav>
-<script>    
+<script>
     // Probably could do this in python but it was just easier in js
     // Basic Statemanagement for the dashboard
     function menuToggle() {
