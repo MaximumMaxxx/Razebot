@@ -4,7 +4,8 @@
   "description": "<p align=\"center\">     <a href=\"https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true\">         <img src=\"assets/Valobot logo raze thicckened.png\" alt=\"Logo\" width=\"160\" height=\"160\">     </a> <h5 align=\"center\"> Razebot</h5> </p>",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "css": "npx tailwindcss -i ./static/src/style.css -o ./static/css/main.css -c ./tailwind.config.js -w"
   },
   "author": "",
   "license": "ISC",
