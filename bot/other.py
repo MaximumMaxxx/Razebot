@@ -1,6 +1,6 @@
 import logging
 import discord
-from discord.commands import option
+from discord.commands import Option
 from discord.ext import commands
 from sqlalchemy import create_engine, text
 
@@ -57,36 +57,40 @@ class Other(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="setroles", description="Set the role for each VALORANT comp rank")
-    async def setroles(self, ctx: discord.ApplicationContext, role: discord.role.Role = option(name="role", Required=True), rank: str = option(name="valorant rank", Required=True)):
+    async def setroles(self, ctx: discord.ApplicationContext, role: discord.role.Role = Option(name="role", Required=True), rank: str = Option(name="valorant rank", Required=True)):
         valid_ranks = validRanks()
         if rank.lower() in valid_ranks:
             with engine.connect() as conn:
                 # There should already be a settings table created when the bot first joined so we can just acess it here
                 conn.execute(
                     text(
-                        f'''REPLACE INTO rl{ctx.guild.id} (role,value) VALUES ('{role.id}','{rank}')''')
+                        f'''REPLACE INTO rl{ctx.guild.id} (role,value) VALUES ('{role.id}','{rank.lower()}')''')
                 )
                 conn.commit()
-                embed = discord.Embed(title=f"{role.name} successfully updated",
-
+                embed = discord.Embed(title=f"{role.name} successfully add or updated",
                                       description=f"The changes should take effect immediately", color=discord.Color.green())
 
                 result = conn.execute(
                     text(f"SELECT * FROM rl{ctx.guild.id}")
                 )
                 guild_roles = result.all()
+                print(len(guild_roles))
 
                 if not len(guild_roles) == len(valid_ranks):
-                    if len(guild_roles) != 0:
-                        ctx.send(embed=discord.Embed(title="You still have some roles to add",
-                                                     description=f"Please rerun this command for each of the following VALORANT ranks: {[i for i in valid_ranks if i not in guild_roles[1]]}").set_footer(text="Razebot by MaximumMaxx")
-                                 )
-                    else:
-                        ctx.send(embed=discord.Embed(title="You still have some roles to add",
-                                                     description=f"Please rerun this command for each of the following VALORANT ranks: {[i for i in valid_ranks]}").set_footer(text="Razebot by MaximumMaxx")
-                                 )
+                    missingRanks = ""
+                    for rank in validRanks():
+                        isIn = False
+                        print(guild_roles)
+                        for serverRank in guild_roles:
+                            print(serverRank)
+                            if serverRank[2].lower() == rank.lower():
+                                isIn = True
+                        if not isIn is True:
+                            missingRanks += f"{rank} "
 
-                return
+                    await ctx.send(embed=discord.Embed(title="You still have some roles to add",
+                                                       description=f"Please rerun this command for each of the following VALORANT ranks: {missingRanks}").set_footer(text="Razebot by MaximumMaxx")
+                                   )
         else:
             embed = discord.Embed(
                 title="Invalid Rank", description=f"You entered {rank} but the valid options are {valid_ranks}.", color=discord.Color.red())
@@ -95,10 +99,9 @@ class Other(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="help", description="Outputs a short description of how a command works and links to Razebot.com for further reading.")
-    async def help(self, ctx: discord.ApplicationContext, setting: str = option(avaliableHelpMenus(), None, required=False)):
+    async def help(self, ctx: discord.ApplicationContext, setting: str = Option(avaliableHelpMenus(), None, required=False)):
         setting = setting or None
-
-        if setting != None:
+        if setting is None:
             if setting in self.avaliableHelpMenus:
                 embed = discord.Embed(
                     title=self.helpMenus[setting][1], description=self.HelpMenus[setting][2], color=discord.Color.dark_green())
@@ -110,7 +113,7 @@ class Other(commands.Cog):
         else:
             # Return the default help menu
             embed = discord.Embed(
-                title="List of help menus", description=f"Current help menus: /help rc, /help myaccs, /help quickaccs, /help updaterole, /help quick vs myaccs, /help settings, /help setroles")
+                title="List of help menus", description=f"Current help menus: {avaliableHelpMenus()}")
             image = "https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true"
 
         embed.set_thumbnail(url=image)

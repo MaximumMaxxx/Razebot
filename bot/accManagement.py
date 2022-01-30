@@ -1,5 +1,5 @@
 import discord
-from discord.commands import option
+from discord.commands import Option
 from discord.ext import commands
 from sqlalchemy import create_engine, text
 import requests
@@ -92,11 +92,11 @@ class accManagement(commands.Cog):
 
     @commands.slash_command(name="myaccs", description="Interact with the list of your account (accounts you actually own).")
     async def myaccs(self, ctx: discord.ApplicationContext,
-                     operation: str = option(name="operation", Required=True),
-                     account: str = option(
+                     operation: str = Option(name="operation", Required=True),
+                     account: str = Option(
                          name="account", Required=False, description="Formatted as name#tag"),
-                     region: str = option(name="region", Required=False),
-                     note: str = option(name="note", Required=False, description="short note (255 characters)")):
+                     region: str = Option(name="region", Required=False),
+                     note: str = Option(name="note", Required=False, description="short note (255 characters)")):
 
         account = account or None
 
@@ -162,12 +162,12 @@ class accManagement(commands.Cog):
     @commands.slash_command(name="quickaccounts", description="Used to interact with the quick accounts database")
     # More or less a 1 - 1 copy of myaccs
     async def quickaccs(self, ctx: discord.ApplicationContext,
-                        operation: str = option(
+                        operation: str = Option(
                             name="operation", Required=True),
-                        account: str = option(
+                        account: str = Option(
                             name="account", Required=False, description="Formatted as name#tag"),
-                        region: str = option(name="region", Required=False),
-                        note: str = option(name="note", Required=False, description="short note (255 characters)")):
+                        region: str = Option(name="region", Required=False),
+                        note: str = Option(name="note", Required=False, description="short note (255 characters)")):
 
         account = account or None
 
