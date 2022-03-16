@@ -5,3 +5,4 @@ quart
 git+https://github.com/MaximumMaxxx/Cordless-Quart-Discord
 git+https://github.com/Pycord-Development/pycord
 Quart-Csrf
+pymysql
