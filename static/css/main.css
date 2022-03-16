@@ -473,6 +473,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   margin: 0px;
 }
 
+.m-2 {
+  margin: 0.5rem;
+}
+
 .ml-auto {
   margin-left: auto;
 }
@@ -499,6 +503,18 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .ml-2 {
   margin-left: 0.5rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+
+.mb-auto {
+  margin-bottom: auto;
 }
 
 .flex {
@@ -575,6 +591,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .h-16 {
   height: 4rem;
+}
+
+.h-4 {
+  height: 1rem;
 }
 
 .w-5 {
@@ -663,6 +683,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   place-items: center;
 }
 
+.content-center {
+  align-content: center;
+}
+
 .items-center {
   align-items: center;
 }
@@ -709,6 +733,10 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .rounded-full {
   border-radius: 9999px;
+}
+
+.rounded-sm {
+  border-radius: 0.125rem;
 }
 
 .border-2 {
@@ -811,6 +839,10 @@ Ensure the default browser behavior of the `hidden` attribute.
   padding-right: 0.75rem;
 }
 
+.pr-8 {
+  padding-right: 2rem;
+}
+
 .pt-4 {
   padding-top: 1rem;
 }
@@ -821,6 +853,14 @@ Ensure the default browser behavior of the `hidden` attribute.
 
 .text-center {
   text-align: center;
+}
+
+.align-middle {
+  vertical-align: middle;
+}
+
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .text-4xl {
@@ -841,6 +881,11 @@ Ensure the default browser behavior of the `hidden` attribute.
 .text-7xl {
   font-size: 4.5rem;
   line-height: 1;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
 }
 
 .font-bold {
@@ -872,6 +917,21 @@ Ensure the default browser behavior of the `hidden` attribute.
 .text-gray-400 {
   --tw-text-opacity: 1;
   color: rgb(156 163 175 / var(--tw-text-opacity));
+}
+
+.text-red-50 {
+  --tw-text-opacity: 1;
+  color: rgb(254 242 242 / var(--tw-text-opacity));
+}
+
+.text-red-500 {
+  --tw-text-opacity: 1;
+  color: rgb(239 68 68 / var(--tw-text-opacity));
+}
+
+.text-red-800 {
+  --tw-text-opacity: 1;
+  color: rgb(153 27 27 / var(--tw-text-opacity));
 }
 
 .outline-none {

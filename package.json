@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "css": "npx tailwindcss -i ./static/src/style.css -o ./static/css/main.css -c ./tailwind.config.js -w"
+    "css": "npx tailwindcss -i ./static/src/style.css -o ./static/css/main.css -w"
   },
   "author": "",
   "license": "ISC",

@@ -113,6 +113,8 @@ ENV/
 env.bak/
 venv.bak/
 node_modules/
+env/
+
 
 # Spyder project settings
 .spyderproject
@@ -137,8 +139,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-log.txt
+
 bot_token.py
-static/bot/env.py
-static/bot/cogs/secrets.py
-static/bot/cogs/bot.py
+secrets.py
