@@ -1,24 +1,26 @@
 # Code slightly stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
 import time
 import os
-import asyncio
 import logging
 
 import discord
 from discord.ext import commands
 from quart.helpers import make_response
 from quart import Quart, redirect, url_for, render_template, request
-from quart_discord import DiscordOAuth2Session, requires_authorization, Unauthorized, AccessDenied
+from quart_discord import DiscordOAuth2Session, RateLimited, requires_authorization, Unauthorized, AccessDenied
 import requests
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from quart_csrf import CSRFProtect
 
-from helpers.Helper import requiresAdmin
+from helpers.Helper import requiresAdmin, validRanks, parseDashboardChoices
 from secrets.secrets import Secrets
+from blueprints.api import blueprint
 
-logging.basicConfig(level=logging.WARNING,
-                    encoding="utf-8", filename="Logs.log")
+logging.basicConfig(level=logging.WARNING, filename="Logs.log")
 app = Quart(__name__)
+# Load in the pages
+app.register_blueprint(blueprint, url_prefix="/api")
+
 CSRFProtect(app)
 
 engine = create_engine(
@@ -31,12 +33,7 @@ refresh_time = time.time() + timeout_time
 
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
 # Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
-valid_ranks = []
-for i in CompTiers.json()["data"][0]["tiers"]:
-    # Just making sure that it's not one of the unused divisions
-    if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
-        # valid_ranks should have the lowercase version of the ranks
-        valid_ranks.append(i["divisionName"].lower())
+valid_ranks = validRanks()
 
 
 app.secret_key = Secrets.websecretkey
@@ -82,12 +79,10 @@ async def callback():
 @app.route("/serverselect")
 @requires_authorization
 async def serverselect():
-    user = await discordd.fetch_user()
     # Big ol list comprehension that produces a list of lists with the icon, name, and ownership status, and if the bot is the server for each server the user is in but only if they have the ability to add bots
-    if await discordd.authorized:
-        user = await discordd.fetch_user()
-        return await render_template("select.html", servers=[[guild.icon_url, guild.name, guild.is_owner, guild.id, True if guild.id in bot.guilds else False] for guild in await user.fetch_guilds() if int(guild.permissions.value) & 1 << 5 or int(guild.permissions.value) & 1 << 3], logged_in=[True, user.avatar_url, user.name])
-    return await render_template("select.html", servers=[[guild.icon_url, guild.name, guild.is_owner, guild.id, True if guild.id in bot.guilds else False] for guild in await user.fetch_guilds() if int(guild.permissions.value) & 1 << 5 or int(guild.permissions.value) & 1 << 3], logged_in=[False])
+    user = await discordd.fetch_user()
+
+    return await render_template("select.html", servers=[[guild.icon_url, guild.name, guild.is_owner, guild.id, True if any(guild.id == guildb.id for guildb in bot.guilds) else False] for guild in await user.fetch_guilds() if int(guild.permissions.value) & 1 << 5 or int(guild.permissions.value) & 1 << 3], logged_in=[True, user.avatar_url, user.name])
 
 
 @app.route("/<guild>/dashboard")
@@ -96,15 +91,14 @@ async def serverselect():
 async def dashboard(guild):
     # Settings is formatted like
     user = await discordd.fetch_user()
-    return await render_template("dashboard.html", settings=[
-        # The formatting here is important
-        # * means can be repeated as many times as you wants
-        # For the select is setup like ["select","Name/address it will be posted to", [*["Select option","nothing or default"]]]
-        # For text input it's ["string","name","default value"]
-
-        ["select", "Region", [["NA", ""], ["EU", "default"]]],
-        ["string", "Prefix", ">"]], logged_in=[True, user.avatar_url, user.name]
-    )
+    with engine.connect() as conn:
+        rslt = conn.execute(text(f"SELECT * FROM set{guild}"))
+    serverSettings = rslt.all()
+    settings = [parseDashboardChoices(setting, value)
+                for id, setting, value in serverSettings]
+    print(settings)
+    return await render_template("dashboard.html", settings=settings, logged_in=[True, user.avatar_url, user.name], server=guild
+                                 )
 
 
 @app.errorhandler(Unauthorized)
@@ -116,6 +110,11 @@ async def redirect_unauthorized(e):
 @app.errorhandler(AccessDenied)
 async def access_denied(e):
     return await render_template("acessdenied.html")
+
+
+@app.errorhandler(RateLimited)
+async def rate_limited(e):
+    return ("We are currently being rate limited please wait")
 
 
 @app.route("/setting/<string:setting>", methods=["POST"])
@@ -158,76 +157,6 @@ async def status_task():
 
 @bot.command()
 @commands.is_owner()
-async def goodnight(ctx):
-    await ctx.channel.send("Sleep well")
-    await bot.logout()
-
-
-@bot.command()
-@commands.is_owner()
-async def load(ctx, extension):
-    try:
-        bot.load_extension(extension)
-        print('{} loaded sucessfully.'.format(extension))
-        embed = discord.Embed(
-            title='{} loaded sucessfully.'.format(extension),
-            color=ctx.author.color
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await asyncio.sleep(5)
-        await msg.delete()
-    except Exception as error:
-        print('{} raised an exception during loading. [{}]'.format(
-            extension, error))
-        embed = discord.Embed(
-            title='{} raised an exception during loading. [{}]'.format(
-                extension, error),
-            color=ctx.author.color
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await asyncio.sleep(5)
-        await msg.delete()
-
-
-@bot.command()
-@commands.is_owner()
-async def unload(ctx, extension):
-    try:
-        bot.unload_extension(extension)
-        print('{} Extension unloaded.'.format(extension))
-        embed = discord.Embed(
-            title='{} Successfully unloaded.'.format(extension),
-            color=ctx.author.color
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await asyncio.sleep(5)
-        await msg.delete()
-    except Exception as error:
-        print('{} raised an exception during unloading. [{}]'.format(
-            extension, error))
-        embed = discord.Embed(
-            title='{} rasied an exception during unloading. [{}]'.format(
-                extension, error),
-            color=ctx.author.color
-        )
-        msg = await ctx.channel.send(embed=embed)
-        await asyncio.sleep(5)
-        await msg.delete()
-
-
-@bot.command()
-@commands.is_owner()
-async def reload(ctx, extension):
-    try:
-        bot.unload_extension(extension)
-        bot.load_extension(extension)
-        await ctx.channel.send('{} raided an exception while reloading'.format(extension))
-    except Exception as error:
-        await ctx.channel.send('{} raised an exception while reloading. [{}]'.format(extension, error))
-
-
-@bot.command()
-@commands.is_owner()
 async def loaded(ctx: discord.ApplicationContext):
     embed = discord.Embed(
         title="Loaded Extensions",
@@ -248,6 +177,8 @@ def run():
         except Exception as error:
             print('{} failed to load [{}]'.format(
                 extension, error))
+            logging.error(
+                f"{extension} failed to load [{error}]")
     bot.run(Secrets.bottoken)
 
 

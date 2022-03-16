@@ -1,3 +1,4 @@
+from discord import List
 from quart_discord import current_app
 import requests
 from sqlalchemy import text
@@ -5,17 +6,7 @@ from sqlalchemy.engine.base import Engine
 from quart_discord import exceptions
 import functools
 import logging
-
-
-def validRanks():
-    CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
-    valid_ranks = []
-    for i in CompTiers.json()["data"][0]["tiers"]:
-        # Just making sure that it's not one of the unused divisions
-        if not i["divisionName"].lower() in valid_ranks and i["divisionName"] != "Unused2" and i["divisionName"] != "Unused1":
-            # valid_ranks should have the lowercase version of the ranks
-            valid_ranks.append(i["divisionName"].lower())
-    return(valid_ranks)
+from discord.commands import OptionChoice
 
 
 def avaliableSettings():
@@ -23,7 +14,7 @@ def avaliableSettings():
 
 
 def validRanks():
-    return(["iron", "bronze", "silver", "gold", "platinum", "diamond", "immortal", "radiant"])
+    return(["iron", "bronze", "silver", "gold", "platinum", "diamond", "immortal", "radiant", "none"])
 
 
 def compTiers():
@@ -85,6 +76,7 @@ def AddAcc(engine: Engine, user, type, ign, note):
                 text(
                     f'''INSERT INTO {type}{user} (note,ign) VALUES ({note},{ign})''')
             )
+            conn.commit()
             return("sucess")
 
 
@@ -100,6 +92,7 @@ def RmAcc(engine: Engine, user, type, ign):
             conn.execute(
                 sql=f'''DELETE FROM {type}{user} WHERE ign like '{ign}' '''
             )
+            conn.commit()
             return("sucess")
         else:
             return("NIDB")
@@ -123,3 +116,45 @@ def requiresAdmin(view):
         return await view(*args, **kwargs)
 
     return wrapper
+
+
+def parseDashboardChoices(setting: str, value: str):
+    # The formatting here is important
+    # * means can be repeated as many times as you wants
+    # For the select is setup like ["select","Name/address it will be posted to", [*["Select option","nothing or default"]]]
+    # For text input it's ["string","name","default value"]
+
+    lookupTable = {
+        "region": ["select", "_", [["NA", False], ["EU", False], ["AP", False], ["KR", False]]],
+        "max_self_role": ["select", "_", [[Value, False if Value != value else True] for Value in validRanks()]]
+    }
+    logging.warning(f"Setting {setting} and Value {value}")
+    formatted = lookupTable[setting]
+    formatted[1] = setting
+    if formatted[0] == "select":
+        for setting in formatted[2]:
+            if setting[0].lower() == value.lower():
+                setting[1] = True
+    elif formatted[0] == "string":
+        formatted[2] = value
+    return formatted
+
+
+def regions():
+    return ["kr", "na", "eu", "ap"]
+
+
+def regionsChoice():
+    return [OptionChoice(name=i, value=i) for i in regions()]
+
+
+def rankChoices():
+    return [OptionChoice(name=i, value=i) for i in validRanks()]
+
+
+def settingChoices():
+    return [OptionChoice(name=i, value=i) for i in avaliableSettings()]
+
+
+def helpmenuChoice():
+    return [OptionChoice(name=i, value=i) for i in helpMenus()]
