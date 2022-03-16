@@ -1,11 +1,11 @@
 import logging
 import discord
-from discord.commands import Option
+from discord.commands import option
 from discord.ext import commands
 from sqlalchemy import create_engine, text
 
 from secrets.secrets import Secrets
-from helpers.Helper import avaliableSettings, validRanks, avaliableHelpMenus, helpMenus
+from helpers.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
 
 engine = create_engine(
     f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=True, future=True)
@@ -14,8 +14,6 @@ engine = create_engine(
 class Other(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.avaliableHelpMenus = avaliableHelpMenus()
-        self.helpMenus = helpMenus()
 
     @commands.slash_command(name="credits")
     async def credits(self, ctx: discord.ApplicationContext):
@@ -29,7 +27,11 @@ class Other(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="settings")
-    async def settings(self, ctx: discord.ApplicationContext, setting: str, value: str):
+    async def settings(self,
+                       ctx: discord.ApplicationContext,
+                       setting: str = option(
+                           name="settings", description="The seting to change", choices=avaliableSettings()),
+                       value: str = option(name="value", description="What do you want to set the setting to?")):
         if setting != None:
             if setting.lower() in avaliableSettings():
 
@@ -43,7 +45,7 @@ class Other(commands.Cog):
                     logging.info(
                         f"Updated the setting {setting.lower()} in guild {ctx.guild.id} to {value}")
 
-                embed = embed = discord.Embed(
+                embed = discord.Embed(
                     title=f"{setting} successfully updated", description=f"The changes should take effect immediately", color=discord.Color.green())
             else:
                 embed = discord.Embed(
@@ -57,7 +59,10 @@ class Other(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="setroles", description="Set the role for each VALORANT comp rank")
-    async def setroles(self, ctx: discord.ApplicationContext, role: discord.role.Role = Option(name="role", Required=True), rank: str = Option(name="valorant rank", Required=True)):
+    async def setroles(self, ctx: discord.ApplicationContext,
+                       role: discord.Role = option(name="role", Required=True),
+                       rank: str = option(name="valorant rank", Required=True, choices=validRanks())):
+
         valid_ranks = validRanks()
         if rank.lower() in valid_ranks:
             with engine.connect() as conn:
@@ -99,7 +104,10 @@ class Other(commands.Cog):
         await ctx.respond(embed=embed)
 
     @commands.slash_command(name="help", description="Outputs a short description of how a command works and links to Razebot.com for further reading.")
-    async def help(self, ctx: discord.ApplicationContext, setting: str = Option(avaliableHelpMenus(), None, required=False)):
+    async def help(self, ctx: discord.ApplicationContext,
+                   setting: str = option(name="setting",
+                                         description="What setting do you need help with?",
+                                         required=False, choices=avaliableSettings())):
         setting = setting or None
         if setting is None:
             if setting in self.avaliableHelpMenus:
@@ -113,7 +121,7 @@ class Other(commands.Cog):
         else:
             # Return the default help menu
             embed = discord.Embed(
-                title="List of help menus", description=f"Current help menus: {avaliableHelpMenus()}")
+                title="List of help menus", description=f"Current help menus: {helpMenus()}")
             image = "https://github.com/MaximumMaxxx/Razebot/blob/main/assets/Valobot%20logo%20raze%20thicckened.png?raw=true"
 
         embed.set_thumbnail(url=image)

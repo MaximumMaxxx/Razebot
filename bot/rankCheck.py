@@ -5,12 +5,12 @@ from random import choice
 
 import discord
 from discord.ext import commands
-from discord.commands import Option
+from discord.commands import option
 import requests
 from PIL import ImageColor
 from sqlalchemy import create_engine, text
 
-from helpers.Helper import compTiers as ct
+from helpers.Helper import compTiers as ct, regionsChoice
 from secrets.secrets import Secrets
 
 engine = create_engine(
@@ -102,7 +102,8 @@ class Rankcheck(commands.Cog):
         return(embed)
 
     @commands.slash_command(name="rankchecklist", description="Check the Rank of an account from either your Quick accounts or My accounts list")
-    async def rclist(self, ctx: discord.ApplicationContext, list: str = Option(name="List", description="The list that you want to pull the accounts from. (my | quick)", Required=True)):
+    async def rclist(self, ctx: discord.ApplicationContext,
+                     list: str = option(name="List", description="The list that you want to pull the accounts from. (my | quick)", Required=True)):
         list = list.lower()
         operation = ""
         if list == "quick":
@@ -205,7 +206,8 @@ class Rankcheck(commands.Cog):
         await msg.edit(content=None, embed=self.get_acc(accounts[account_index]))
 
     @commands.slash_command(name="rankcheckaccount", description="Get the stats for a specific VALORANT account")
-    async def rcacc(self, ctx: discord.ApplicationContext, account: str = Option(name="Account", description="The VALORANT account you would like to check the rank of"), region: str = Option(name="Region", description=f"The region the account is in. If not specified will default to the server's default region.", choices=[discord.OptionChoice(name="North America", value="na"), discord.OptionChoice(name="Europe", value="eu"), discord.OptionChoice(name="Korea", value="kr"), discord.OptionChoice(name="Asia Pacific", value="ap")])):
+    async def rcacc(
+            self, ctx: discord.ApplicationContext, account: str = option(name="Account", description="The VALORANT account you would like to check the rank of"), region: str = option(name="Region", description=f"The region the account is in. If not specified will default to the server's default region.", choices=regionsChoice())):
         # The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
         # Accounts is expected to be a list of tuples but you can just pass in a one item list and 0 and it acomplishes the same thing
 

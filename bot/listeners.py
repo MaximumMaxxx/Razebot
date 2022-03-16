@@ -15,6 +15,7 @@ engine = create_engine(
 class Listeners(commands.Cog):
     def __init__(self, bot, ):
         self.bot = bot
+        self.default_region = "na"
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -39,10 +40,12 @@ class Listeners(commands.Cog):
             )
             conn.execute(
                 # Creating some default settings values
-                sql=f"REPLACE INTO set{guild.id} (setting,value) VALUES ('region','{self.default_region}')"
+                text(
+                    f"REPLACE INTO set{guild.id} (setting,value) VALUES ('region','{self.default_region}')")
             )
             conn.execute(
-                sql=f"REPLACE INTO set{guild.id} (setting,value) VALUES ('max_self_role','None')"
+                text(
+                    f"REPLACE INTO set{guild.id} (setting,value) VALUES ('max_self_role','None')")
             )
             conn.commit()
         # Maybe remove before final release
