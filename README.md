@@ -29,7 +29,7 @@ For this guide I'll assume you have atleast a basic understanding of how to use 
 
 2.) cd into the folder that was just created and run ```python3 -m venv env``` and ```source env/bin/activate``` or ```env/Scripts\activate.bat``` on Unix/Linux or Windows respectively.
 
-3.) run ```python3 -m pip install -r requirements.txt``` your terminal will now be flooded with messages. If you want to modify the website it is also a good idea to run ```npm install``` to install tailwindcss. Tailwind can be run with ```npx tailwindcss --watch --output ./static/css/main.css``` which will watch from any changes in the templates folder and rebuild the css.
+3.) run ```python3 -m pip install -r requirements.txt``` your terminal will now be flooded with messages. If you want to modify the website it is also a good idea to run ```npm install``` to install tailwindcss. Tailwind can be run with ```npm run css``` which will watch from any changes in the templates folder and rebuild the css.
 
 3.5) Setup a Mysql server [Here is the official guide](https://dev.mysql.com/doc/mysql-getting-started/en/) or
 using this [Docker Container](https://hub.docker.com/_/mysql)
