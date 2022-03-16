@@ -1,11 +1,11 @@
 import discord
-from discord.commands import Option
+from discord.commands import option, OptionChoice
 from discord.ext import commands
 from sqlalchemy import create_engine, text
 import requests
 
 from secrets.secrets import Secrets
-from helpers.Helper import validRanks, CreateAccTable, AddAcc, RmAcc
+from helpers.Helper import CreateAccTable, regions, AddAcc, RmAcc, regionsChoice
 
 
 engine = create_engine(
@@ -13,9 +13,13 @@ engine = create_engine(
 
 
 class accManagement(commands.Cog):
-    def __init__(self, bot) -> None:
+    def __init__(self, bot: discord.bot.Bot) -> None:
         self.bot = bot
-        self.valid_ranks = validRanks
+    myaccs = discord.SlashCommandGroup(
+        "MyAccounts", "The commands for managing your owned accounts")
+
+    quickaccs = discord.SlashCommandGroup(
+        "QuickAccounts", "The commands for managing your quick accounts")
 
     @commands.slash_command(name="updaterole", description="Update your server role based on the ranks of the accounts saved in your myaccs list")
     async def updaterole(self, ctx):
@@ -90,26 +94,13 @@ class accManagement(commands.Cog):
             # edits message from response
         await msg.edit(embed=embed, content=None)
 
-    @commands.slash_command(name="myaccs", description="Interact with the list of your account (accounts you actually own).")
-    async def myaccs(self, ctx: discord.ApplicationContext,
-                     operation: str = Option(name="operation", Required=True),
-                     account: str = Option(
-                         name="account", Required=False, description="Formatted as name#tag"),
-                     region: str = Option(name="region", Required=False),
-                     note: str = Option(name="note", Required=False, description="short note (255 characters)")):
-
-        account = account or None
-
+    @myaccs.command()
+    async def list(self, ctx):
         CreateAccTable(engine, ctx.author.id, "M")
-        account, tag = account.split("#") if account != None else None
-        note = note or None
-        region = region or None
-
-        if operation.lower() == "list":
-            with engine.connect() as conn:
-                result = conn.execute(
-                    text(f"SELECT * FROM M{ctx.author.id}")
-                )
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(f"SELECT * FROM M{ctx.author.id}")
+            )
             author_accs = result.all()
 
             if len(author_accs) == 0:
@@ -120,112 +111,108 @@ class accManagement(commands.Cog):
                     title="Your Accounts", color=discord.Color.dark_red())
                 for account in author_accs:
                     embed.add_field(name=account[2], value=account[1])
+        await ctx.respond(embed)
 
-        elif operation.lower() == "add":
-
-            if region != None:
-                if account != None:
-                    if note == None:
-                        note = "No note"
-                    returned = AddAcc(
-                        engine, ctx.author.id, "M", f"{account}#{tag}", note)
-                    if returned == "duplicate":
-                        embed = discord.Embed(
-                            title="ERROR", description="That account has already been saved by you", color=discord.Color.red())
-                    elif returned == "maxed":
-                        embed = discord.Embed(title="ERROR", description="Listen man, you have 25 accounts saved. there is no reason you should have that many accounts. You should seriously reconsider whatever life decisions brought you here. Sorry but this is an intervention. If you got here by adding a bunch of other accounts then you're using this wrong. Alrigt rant over, have a good night or afternoon or day or whatever.",  color=discord.Color.red())
-                    elif returned == "sucess":
-                        embed = discord.Embed(
-                            title="Sucess", description="Your account has successfully been added to the database", color=discord.Color.green())
-
-                else:
-                    embed = discord.Embed(
-                        title="Error", description="Please specify a VALORANT account", color=discord.Color.red())
-
-            else:
-                embed = discord.Embed(
-                    title="Error", description="Please specify a region", color=discord.Color.red())
-
-        elif operation.lower() == "remove" or operation.lower() == "delete":
-            returned = RmAcc(engine, ctx.author.id,
-                             "M", f"{account}#{tag}")
-            if returned == "sucess":
-                embed = discord.Embed(
-                    title="Sucess", description="You account has successfully been removed from the database", color=discord.Color.green())
-            elif returned == "NIDB":
-                embed = discord.Embed(
-                    title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red())
-
-        embed.set_footer(text="Razebot by MaximumMaxx")
-        await ctx.respond(embed=embed)
-
-    @commands.slash_command(name="quickaccounts", description="Used to interact with the quick accounts database")
-    # More or less a 1 - 1 copy of myaccs
-    async def quickaccs(self, ctx: discord.ApplicationContext,
-                        operation: str = Option(
-                            name="operation", Required=True),
-                        account: str = Option(
-                            name="account", Required=False, description="Formatted as name#tag"),
-                        region: str = Option(name="region", Required=False),
-                        note: str = Option(name="note", Required=False, description="short note (255 characters)")):
-
-        account = account or None
-
-        CreateAccTable(engine, ctx.author.id, "Q")
+    @myaccs.command()
+    async def add(self, ctx, account: str, region: str, note: str):
+        CreateAccTable(engine, ctx.author.id, "M")
         account, tag = account.split("#") if account != None else None
-        note = note or None
-        region = region or None
-
-        if operation.lower() == "list":
-            with engine.connect() as conn:
-                result = conn.execute(
-                    text(f"SELECT * FROM Q{ctx.author.id}")
-                )
-                author_accs = result.all()
-
-            if len(author_accs) == 0:
-                embed = discord.Embed(
-                    title="ERROR", description="You have not accounts to list. Use /quickaccs to add an account", color=discord.Color.red())
-            else:
-                embed = discord.Embed(
-                    title="Your Quick Accounts", color=discord.Color.dark_red())
-                for account in author_accs:
-                    embed.add_field(name=account[2], value=account[1])
-
-        elif operation.lower() == "add":
-
-            if region != None:
-                if account != None:
-                    if note == None:
-                        note = "No note"
-                    returned = AddAcc(
-                        ctx.author.id, "Q", f"{account}#{tag}", note)
-                    if returned == "duplicate":
-                        embed = discord.Embed(
-                            title="ERROR", description="That account has already been saved by you", color=discord.Color.red())
-                    elif returned == "sucess":
-                        embed = discord.Embed(
-                            title="Sucess", description="Your account has successfully been added to the database", color=discord.Color.green())
-
-                else:
+        if region != None:
+            if account != None:
+                if note == None:
+                    note = "No note"
+                returned = AddAcc(
+                    engine, ctx.author.id, "M", f"{account}#{tag}", note)
+                if returned == "duplicate":
                     embed = discord.Embed(
-                        title="Error", description="Please specify a VALORANT account", color=discord.Color.red())
+                        title="ERROR", description="That account has already been saved by you", color=discord.Color.red())
+                elif returned == "maxed":
+                    embed = discord.Embed(title="ERROR", description="Listen man, you have 25 accounts saved. there is no reason you should have that many accounts. You should seriously reconsider whatever life decisions brought you here. Sorry but this is an intervention. If you got here by adding a bunch of other accounts then you're using this wrong. Alrigt rant over, have a good night or afternoon or day or whatever.",  color=discord.Color.red())
+                elif returned == "sucess":
+                    embed = discord.Embed(
+                        title="Sucess", description="Your account has successfully been added to the database", color=discord.Color.green())
 
             else:
                 embed = discord.Embed(
-                    title="Error", description="Please specify a region", color=discord.Color.red())
+                    title="Error", description="Please specify a VALORANT account", color=discord.Color.red())
 
-        elif operation.lower() == "remove" or operation.lower() == "delete":
-            returned = RmAcc(engine, ctx.author.id,
-                             "Q", f"{account}#{tag}")
-            if returned == "sucess":
-                embed = discord.Embed(
-                    title="Sucess", description="You account has successfully been removed from the database", color=discord.Color.green())
-            elif returned == "NIDB":
-                embed = discord.Embed(
-                    title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red())
+        else:
+            embed = discord.Embed(
+                title="Error", description="Please specify a region", color=discord.Color.red())
+        await ctx.respond(embed)
 
-        embed.set_footer(text="Razebot by MaximumMaxx")
+    @myaccs.command()
+    async def remove(self, ctx, account: str):
+        CreateAccTable(engine, ctx.author.id, "M")
+        account, tag = account.split("#") if account != None else None
+        returned = RmAcc(engine, ctx.author.id,
+                         "M", f"{account}#{tag}")
+        if returned == "sucess":
+            embed = discord.Embed(
+                title="Sucess", description="You account has successfully been removed from the database", color=discord.Color.green())
+        elif returned == "NIDB":
+            embed = discord.Embed(
+                title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red())
+        await ctx.respond(embed)
+
+
+# --------------------------------
+
+    @quickaccs.command(name="list")
+    async def list(self, ctx):
+        CreateAccTable(engine, ctx.author.id, "Q")
+        with engine.connect() as conn:
+            result = conn.execute(
+                text(f"SELECT * FROM Q{ctx.author.id}")
+            )
+            author_accs = result.all()
+
+        if len(author_accs) == 0:
+            embed = discord.Embed(
+                title="ERROR", description="You have not accounts to list. Use /quickaccs to add an account", color=discord.Color.red())
+        else:
+            embed = discord.Embed(
+                title="Your Quick Accounts", color=discord.Color.dark_red())
+            for account in author_accs:
+                embed.add_field(name=account[2], value=account[1])
+        await ctx.respond(embed)
+
+    @quickaccs.command(name="add")
+    async def qadd(self, ctx, account: str, note: str, region: str):
+        account, tag = account.split("#") if account != None else None
+        if region != None:
+            if account != None:
+                if note == None:
+                    note = "No note"
+                returned = AddAcc(
+                    ctx.author.id, "Q", f"{account}#{tag}", note)
+                if returned == "duplicate":
+                    embed = discord.Embed(
+                        title="ERROR", description="That account has already been saved by you", color=discord.Color.red())
+                elif returned == "sucess":
+                    embed = discord.Embed(
+                        title="Sucess", description="Your account has successfully been added to the database", color=discord.Color.green())
+
+            else:
+                embed = discord.Embed(
+                    title="Error", description="Please specify a VALORANT account", color=discord.Color.red())
+
+        else:
+            embed = discord.Embed(
+                title="Error", description="Please specify a region", color=discord.Color.red())
+        await ctx.respond(embed)
+
+    @quickaccs.command(name="remove")
+    async def qremove(self, ctx, account: str):
+        account, tag = account.split("#") if account != None else None
+        returned = RmAcc(engine, ctx.author.id,
+                         "Q", f"{account}#{tag}")
+        if returned == "sucess":
+            embed = discord.Embed(
+                title="Sucess", description="You account has successfully been removed from the database", color=discord.Color.green())
+        elif returned == "NIDB":
+            embed = discord.Embed(
+                title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red())
         await ctx.respond(embed=embed)
 
 
