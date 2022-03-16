@@ -16,19 +16,31 @@
     {{ macros.topdropdownmenu(logged_in) }}
     <!-- Wrapper for main -->
     <div class="flex flex-col bg-black items-center !overflow-scroll pb-4 h-screen justify-center">
-        <span>Which server's dashboard do you want to access</span>
+        <span class="text-white pb-4 text-3xl font-bold">Which server's dashboard do you want to access</span>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for server in servers %}
+            {% if server[4] %}
             <a href="{{server[3]}}/dashboard"
-                class="flex w-80 h-40 text-white border-valored border-2 rounded-lg gap-2 bg-black items-center hover:bg-valoreddarker transition p-4 flex-col">
-                <span class="text-lg font-bold">{{server[1]}}</span>
-                <img src="{{server[0]}}" alt="Server icon for {{server[1]}}"
-                    class="w-16 h-16 rounded-full border-white border-4 bg-black">
-                {% if server[2] %}
-                <span>Owner</span>
-                {% endif %}
-            </a>
-            {% endfor %}
+                class="flex-col flex w-80 h-40 text-white border-valored border-2 rounded-lg gap-2 bg-black items-center hover:bg-valoreddarker transition">
+                {% else %}
+                <a href="
+                https://discord.com/api/oauth2/authorize?client_id=907091243459280897&permissions=2483382368&scope=bot%20applications.commands"
+                    class="flex-col flex w-80 h-40 text-white border-valored border-2 rounded-lg gap-2 bg-black items-center hover:bg-valoreddarker transition">
+                    {% endif %}
+                    <span class="text-lg font-bold">{{server[1]}}</span>
+                    <img src="{{server[0]}}" alt="Server icon for {{server[1]}}"
+                        class="w-16 h-16 rounded-full border-white border-4 bg-black">
+                    {% if not server[4] %}
+                    <span>Invite</span>
+                    {% else %}
+                    {% if server[2] %}
+                    <span>Owner</span>
+                    {% else %}
+                    <span>Admin</span>
+                    {% endif %}
+                    {% endif %}
+                </a>
+                {% endfor %}
         </div>
     </div>
     {{ macros.footer() }}

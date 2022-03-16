@@ -47,33 +47,38 @@
         </div>
         <div class="flex flex-col items-center absolute bg-valoreddarker h-screen w-full lg:w-3/4 right-0">
             <!-- Jinja stuff -->
-            {% for setting in settings %}
+            {% for type,setting,other in settings %}
             <div
-                class="flex flex-row items-center w-11/12 bg-black text-white h-20 font-bold p-2 rounded-lg m-3 text-lg">
-                <h1 class="w-min mr-auto text-4xl text-white">{{setting[1]}}</h1>
-                <form action="/setting/{{setting[1]}}" method="post" class="flex flex-row gap-4 h-full">
+                class="flex flex-row items-center w-11/12 bg-black text-white h-20 font-bold p-2 rounded-lg m-3 text-lg align-middle">
+                <h1 class="w-min mr-auto text-4xl text-white">{{setting}}</h1>
+                <form action="/api/{{server}}" method="post" class="flex flex-row gap-4 h-full">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    {% if setting[0] == "select" %}
+                    <input type="hidden" name="operation" value="{{setting}}" />
+                    {% if type == "select" %}
                     <select
-                        class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all">
-                        {% for value in setting[2] %}
+                        class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all"
+                        name="value">
+                        {% for value,isDefault in other %}
 
-                        {% if value[1] == 'default' %}
-                        <option value="{{value[0]}}" selected>{{value[0]}}</option>
+                        {% if isDefault %}
+                        <option value="{{value}}" selected>{{value}}</option>
                         {% else %}
-                        <option value="{{value[0]}}">{{value[0]}}</option>
+                        <option value="{{value}}">{{value}}</option>
                         {% endif %}
 
                         {% endfor %}
                     </select>
                     {% endif %}
 
-                    {% if setting[0] == "string" %}
-                    <input type="text" value="{{setting[2]}}"
-                        class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all">
+                    {% if type == "string" %}
+                    <input type="text" value="{{other}}"
+                        class="rounded-lg border-valored border-2 bg-black p-2 text-center w-48 outline-none focus:border-4 hover:border-4 transition-all"
+                        name="value">
                     {% endif %}
-
-                    <button type="submit">Apply</button>
+                    <div
+                        class="rounded-lg flex content-center align-middle hover:bg-valored h-10 transition mt-auto mb-auto">
+                        <button type="submit" class="m-2">Apply</button>
+                    </div>
                 </form>
             </div>
             {% endfor %}
