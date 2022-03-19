@@ -16,7 +16,9 @@ class Secrets():
     dbpassword = ""
     database = ""
     dbhost = ""
+    echo = False
+    future = False
 
     websecretkey = b""
     webhost = ""
-    webport = 6969
+    webport = 4000
