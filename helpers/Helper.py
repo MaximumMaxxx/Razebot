@@ -50,12 +50,13 @@ def CreateAccTable(engine: Engine, id, type):
             `id` INT NOT NULL AUTO_INCREMENT,
             `note` VARCHAR(255) NULL,
             `ign` VARCHAR(255) NULL,
+            `region` VARCHAR(255) NULL,
             PRIMARY KEY (`id`));
             ''')
         )
 
 
-def AddAcc(engine: Engine, user, type, ign, note):
+def AddAcc(engine: Engine, user, type, ign, note, region):
     with engine.connect() as conn:
         # S signifies a saved accounts table. M signifys a Myaccounts table
         result = conn.execute(
@@ -65,7 +66,7 @@ def AddAcc(engine: Engine, user, type, ign, note):
         if len(RSLT) != 0:
             return("duplicate")
         result = conn.execute(
-            text(f"secect * from {type}{user}")
+            text(f"select * from {type}{user}")
         )
         RSLT = result.all()
         if len(RSLT) == 25 and type == "M":
@@ -74,7 +75,7 @@ def AddAcc(engine: Engine, user, type, ign, note):
             # Name is not in the database
             conn.execute(
                 text(
-                    f'''INSERT INTO {type}{user} (note,ign) VALUES ({note},{ign})''')
+                    f'''INSERT INTO {type}{user} (note,ign,region) VALUES ('{note}','{ign}','{region}')''')
             )
             conn.commit()
             return("sucess")
