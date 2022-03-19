@@ -70,6 +70,11 @@ async def logout():
     return redirect(url_for(".home"))
 
 
+@app.route("/privacy/")
+async def privacy():
+    return await render_template("privacyPolicy.html")
+
+
 @app.route("/callback/")
 async def callback():
     await discordd.callback()
