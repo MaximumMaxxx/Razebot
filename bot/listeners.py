@@ -9,7 +9,7 @@ from app import setting
 from secrets.secrets import Secrets
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=True, future=True)
+    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
 
 
 class Listeners(commands.Cog):

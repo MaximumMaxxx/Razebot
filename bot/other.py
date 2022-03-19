@@ -8,7 +8,7 @@ from secrets.secrets import Secrets
 from helpers.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=True, future=True)
+    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
 
 
 class Other(commands.Cog):
@@ -69,7 +69,7 @@ class Other(commands.Cog):
                 # There should already be a settings table created when the bot first joined so we can just acess it here
                 conn.execute(
                     text(
-                        f'''REPLACE INTO rl{ctx.guild.id} (role,value) VALUES ('{role.id}','{rank.lower()}')''')
+                        f'''REPLACE INTO rl{ctx.guild.id} (role,value) VALUES ('{rank.lower()}','{role.id}')''')
                 )
                 conn.commit()
                 embed = discord.Embed(title=f"{role.name} successfully add or updated",
@@ -88,7 +88,7 @@ class Other(commands.Cog):
                         print(guild_roles)
                         for serverRank in guild_roles:
                             print(serverRank)
-                            if serverRank[2].lower() == rank.lower():
+                            if serverRank[1].lower() == rank.lower():
                                 isIn = True
                         if not isIn is True:
                             missingRanks += f"{rank} "

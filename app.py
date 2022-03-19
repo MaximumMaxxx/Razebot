@@ -24,7 +24,7 @@ app.register_blueprint(blueprint, url_prefix="/api")
 CSRFProtect(app)
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=True, future=True)
+    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
 
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
 timeout_time = 2700
@@ -137,8 +137,6 @@ bot = commands.Bot(command_prefix=">",
 Globalextensions = ["bot.accManagement",
                     "bot.listeners", "bot.other", "bot.rankCheck"]
 
-# Some bot code that I don't feel like abstracting
-
 
 @bot.event
 async def on_ready():
@@ -153,19 +151,6 @@ async def on_ready():
 
 async def status_task():
     await bot.change_presence(activity=discord.Game('VALORANT or something'))
-
-
-@bot.command()
-@commands.is_owner()
-async def loaded(ctx: discord.ApplicationContext):
-    embed = discord.Embed(
-        title="Loaded Extensions",
-        description=" "
-    )
-    extensions = bot.extensions.items()
-    for extension in extensions:
-        embed.add_field(name=extension[0], value="✅", inline=False)
-    await ctx.send(embed=embed)
 
 
 def run():
