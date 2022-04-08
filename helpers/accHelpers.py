@@ -81,6 +81,14 @@ async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, 
 
         embed = discord.Embed(
             title=f"Your {niceType}accounts list", color=discord.Color.red(), description=None)
+
+        for i in range(5):
+            j = (page-1)*5 + i
+            print(j)
+            if j < len(accounts):
+                embed.add_field(
+                    name=f"{j+1}) {accounts[j][2]}", value=accounts[j][1])
+
         embed.set_footer(
             text=f"Page {page} / {max_page_count} \n Razebot by MaximumMaxx")
         await ctx.respond(embed=embed)

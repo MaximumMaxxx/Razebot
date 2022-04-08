@@ -140,5 +140,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-bot_token.py
-secrets.py
+secrets/
