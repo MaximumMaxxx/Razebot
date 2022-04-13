@@ -172,21 +172,36 @@ def get_acc(account: str) -> discord.Embed:
     # Getting the actual account details
     acc, tag = account[2].split("#")
     region = account[3]
+
     try:
         accountReq = requests.get(
             f"https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag}")
+
+        if accountReq.status_code == 403:
+            logging.info(f"Api is being rate limited")
+            embed = discord.Embed(title="ERROR", color=discord.Color.red(
+            ), description="The API is being rate limited. Please try again later.")
+            embed.set_footer(text="Razebot by MaximumMaxx")
+            return(embed)
+
         if accountReq.status_code != 200:
+            logging.info(
+                f"Account not found: {acc}#{tag} Error code {accountReq.status_code}")
             return(discord.Embed(title="ERROR", description="Account not found"))
-        else:
-            puuid = accountReq.json()["data"]['puuid']
+
+        puuid = accountReq.json()["data"]['puuid']
     except discord.ApplicationCommandInvokeError or KeyError as exception:
         logging.exception(
             f"Failed to retrieve account details with url: https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag} produces error: {exception}")
         return(discord.Embed(title="ERROR", description="Account not found", color=discord.Color.red()))
-    MH = requests.get(
-        f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive")
-    MMR = requests.get(
-        f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}")
+
+    mhRequest = f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive"
+    MH = requests.get(mhRequest)
+    mmrRequest = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}"
+    MMR = requests.get(mmrRequest)
+
+    logging.info(
+        f"Made a request for {acc}#{tag} to \n{mhRequest}\n and \n{mmrRequest}\n got status code {MH.status_code} and {MMR.status_code}")
 
     kills = deaths = assists = score = mmr_change = "Unknown"
 
