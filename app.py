@@ -16,7 +16,7 @@ from helpers.Helper import requiresAdmin, validRanks, parseDashboardChoices
 from secrets.secrets import Secrets
 from blueprints.api import blueprint
 
-logging.basicConfig(level=logging.WARNING, filename="Logs.log")
+logging.basicConfig(level=logging.INFO, filename="Logs.log")
 app = Quart(__name__)
 # Load in the pages
 app.register_blueprint(blueprint, url_prefix="/api")
