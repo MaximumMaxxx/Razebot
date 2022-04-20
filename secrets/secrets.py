@@ -1,6 +1,5 @@
 # This file holds all the environment variables
 # Technically secrets isn't the correct word but it's a good enough descriptor
-import time
 
 
 class Secrets():
@@ -21,4 +20,5 @@ class Secrets():
 
     websecretkey = b""
     webhost = ""
-    webport = 4000
+    webport = 0
+    uagentHeader = ""
