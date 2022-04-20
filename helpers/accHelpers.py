@@ -7,6 +7,8 @@ import logging
 import asyncio
 from PIL import ImageColor
 
+from secrets.secrets import Secrets
+
 
 async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
     CreateAccTable(engine, ctx.author.id, type)
@@ -40,7 +42,10 @@ async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.E
 
 async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine, account: str):
     CreateAccTable(engine, ctx.author.id, type)
-    account, tag = account.split("#") if account != None else None
+    try:
+        account, tag = account.split("#") if account != None else None
+    except ValueError:
+        return(discord.Embed(title="ERROR", description="Your account is missing a tag", color=discord.Color.red()))
     returned = RmAcc(engine, ctx.author.id,
                      type, f"{account}#{tag}")
     if returned == "sucess":
@@ -70,21 +75,22 @@ async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.
         return(embed)
 
 
-async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, operation: str, engine: engine.Engine):
+async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, operation: str, engine: engine.Engine, id=-1, ownerShip="Your"):
+    if id == -1:
+        id = ctx.author.id
     with engine.connect() as conn:
         result = conn.execute(
-            text(f"SELECT * FROM {operation}{ctx.author.id}"))
+            text(f"SELECT * FROM {operation}{id}"))
         accounts = result.all()  # 5 accounts per page with a left and right arrow
         page = 1
         max_page_count = math.ceil(len(accounts)/5)
         niceType = "quick" if operation == "Q" else "my"
 
         embed = discord.Embed(
-            title=f"Your {niceType}accounts list", color=discord.Color.red(), description=None)
+            title=f"{ownerShip} {niceType}accounts list", color=discord.Color.red(), description=None)
 
         for i in range(5):
             j = (page-1)*5 + i
-            print(j)
             if j < len(accounts):
                 embed.add_field(
                     name=f"{j+1}) {accounts[j][2]}", value=accounts[j][1])
@@ -117,7 +123,7 @@ async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, 
                 if str(reaction.emoji) == "▶️" and page != max_page_count:
                     page += 1
                     embed = discord.Embed(
-                        title=f"Your {list}accounts list", color=discord.Color.red(), description=None)
+                        title=f"{ownerShip} {list}accounts list", color=discord.Color.red(), description=None)
                     embed.set_footer(
                         text=f"Page {page} / {max_page_count} \n Razebot by MaximumMaxx")
                     for i in range(5):
@@ -131,7 +137,7 @@ async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, 
                 elif str(reaction.emoji) == "◀️" and page > 1:
                     page -= 1
                     embed = discord.Embed(
-                        title=f"Your {list}accounts list", color=discord.Color.red(), description=None)
+                        title=f"{ownerShip} {list}accounts list", color=discord.Color.red(), description=None)
                     embed.set_footer(
                         text=f"Page {page} / {max_page_count} \n Razebot by MaximumMaxx")
                     for i in range(5):
@@ -175,7 +181,7 @@ def get_acc(account: str) -> discord.Embed:
 
     try:
         accountReq = requests.get(
-            f"https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag}")
+            f"https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag}", headers={"user-agent": Secrets.uagentHeader})
 
         if accountReq.status_code == 403:
             logging.info(f"Api is being rate limited")
@@ -187,18 +193,19 @@ def get_acc(account: str) -> discord.Embed:
         if accountReq.status_code != 200:
             logging.info(
                 f"Account not found: {acc}#{tag} Error code {accountReq.status_code}")
-            return(discord.Embed(title="ERROR", description="Account not found"))
+            return(discord.Embed(title="ERROR", description=f"Account not found: {acc}#{tag}"))
 
         puuid = accountReq.json()["data"]['puuid']
     except discord.ApplicationCommandInvokeError or KeyError as exception:
         logging.exception(
             f"Failed to retrieve account details with url: https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag} produces error: {exception}")
-        return(discord.Embed(title="ERROR", description="Account not found", color=discord.Color.red()))
+        return(discord.Embed(title="ERROR", description="Account not found (something went really wrong)", color=discord.Color.red()))
 
     mhRequest = f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive"
-    MH = requests.get(mhRequest)
+    MH = requests.get(mhRequest, headers={"user-agent": Secrets.uagentHeader})
     mmrRequest = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}"
-    MMR = requests.get(mmrRequest)
+    MMR = requests.get(mmrRequest, headers={
+                       "user-agent": Secrets.uagentHeader})
 
     logging.info(
         f"Made a request for {acc}#{tag} to \n{mhRequest}\n and \n{mmrRequest}\n got status code {MH.status_code} and {MMR.status_code}")
@@ -220,7 +227,7 @@ def get_acc(account: str) -> discord.Embed:
         color = compTiers().json(
         )["data"][0]["tiers"][tiernum]["color"][:6]
         embed = discord.Embed(color=discord.Color.from_rgb(ImageColor.getcolor("#"+color, "RGB")[0], ImageColor.getcolor(
-            "#"+color, "RGB")[1], ImageColor.getcolor("#"+color, "RGB")[2]), description=f"The stats and rank for {acc}", title=acc)
+            "#"+color, "RGB")[1], ImageColor.getcolor("#"+color, "RGB")[2]), description=f"The stats and rank for {acc}#{tag}", title=f"{acc}#{tag}")
         embed.add_field(name="Rank", value=rank)
         embed.add_field(name="MMR", value=elo)
     elif MMR.status_code == 204:

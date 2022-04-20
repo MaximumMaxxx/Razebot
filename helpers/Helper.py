@@ -2,11 +2,14 @@ from discord import List
 from quart_discord import current_app
 import requests
 from sqlalchemy import text
+import sqlalchemy
 from sqlalchemy.engine.base import Engine
 from quart_discord import exceptions
 import functools
 import logging
 from discord.commands import OptionChoice
+
+from secrets.secrets import Secrets
 
 
 def avaliableSettings():
@@ -18,7 +21,7 @@ def validRanks():
 
 
 def compTiers():
-    return requests.get("https://valorant-api.com/v1/competitivetiers")
+    return requests.get("https://valorant-api.com/v1/competitivetiers", headers={"user-agent": Secrets.uagentHeader})
 
 
 def helpMenus():
@@ -77,7 +80,6 @@ def AddAcc(engine: Engine, user, type, ign, note, region):
                 text(
                     f'''INSERT INTO {type}{user} (note,ign,region) VALUES ('{note}','{ign}','{region}')''')
             )
-            conn.commit()
             return("sucess")
 
 
@@ -91,9 +93,8 @@ def RmAcc(engine: Engine, user, type, ign):
         if len(RSLT) != 0:
             # Name is not in the database
             conn.execute(
-                sql=f'''DELETE FROM {type}{user} WHERE ign like '{ign}' '''
+                text(f'''DELETE FROM {type}{user} WHERE ign like '{ign}' ''')
             )
-            conn.commit()
             return("sucess")
         else:
             return("NIDB")
@@ -106,7 +107,6 @@ def requiresAdmin(view):
     async def wrapper(*args, **kwargs):
         user = await current_app.discord.fetch_user()
         hasPermission = False
-        print(kwargs["guild"])
         for guild in await user.fetch_guilds():
             if int(guild.permissions.value) & 1 << 5 and guild.id == int(kwargs["guild"]):
                 hasPermission = True

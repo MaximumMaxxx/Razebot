@@ -3,6 +3,7 @@ import discord
 from discord.commands import option
 from discord.ext import commands
 from sqlalchemy import create_engine, text
+import requests
 
 from secrets.secrets import Secrets
 from helpers.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
@@ -79,15 +80,12 @@ class Other(commands.Cog):
                     text(f"SELECT * FROM rl{ctx.guild.id}")
                 )
                 guild_roles = result.all()
-                print(len(guild_roles))
 
                 if not len(guild_roles) == len(valid_ranks):
                     missingRanks = ""
                     for rank in validRanks():
                         isIn = False
-                        print(guild_roles)
                         for serverRank in guild_roles:
-                            print(serverRank)
                             if serverRank[1].lower() == rank.lower():
                                 isIn = True
                         if not isIn is True:
@@ -126,6 +124,27 @@ class Other(commands.Cog):
 
         embed.set_thumbnail(url=image)
         embed.set_footer(text="Razebot by MaximumMaxx")
+        await ctx.respond(embed=embed)
+
+    @commands.slash_command(name="test", guild_ids=[898725831164178442])
+    async def test(self, ctx):
+        # Make a quick api call to see if the api is up
+        resp = ""
+
+        request = requests.get("https://valorant-api.com/v1/competitivetiers",
+                               headers={"user-agent": Secrets.uagentHeader})
+        if request.status_code != 200:
+            resp += "Icon API is down or not responding\n"
+        request = requests.get(
+            "https://api.henrikdev.xyz/valorant/v1/version/na", headers={"user-agent": Secrets.uagentHeader})
+        if request.status_code != 200:
+            resp += f"Rank API is down or not responding status code: {request.status_code}\n"
+        if resp != "":
+            embed = discord.Embed(
+                title="API is down", description=resp, color=discord.Color.red())
+        else:
+            embed = discord.Embed(
+                title="API is up", description="All systems are operational", color=discord.Color.green())
         await ctx.respond(embed=embed)
 
 

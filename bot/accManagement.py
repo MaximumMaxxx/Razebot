@@ -39,8 +39,6 @@ class accManagement(commands.Cog):
                 for i in range(len(guild_roles)):
                     roleDict[guild_roles[i][1]] = guild_roles[i][2]
 
-                print(roleDict)
-
                 for rank in roleDict:
                     await ctx.author.remove_roles(discord.utils.get(ctx.author.guild.roles, id=int(roleDict[rank])))
 
@@ -54,7 +52,7 @@ class accManagement(commands.Cog):
                     for account in author_accs:
                         uname, tag = account[2].split('#')
                         MMR = requests.get(
-                            f"https://api.henrikdev.xyz/valorant/v1/mmr/{account[3]}/{uname}/{tag}")
+                            f"https://api.henrikdev.xyz/valorant/v1/mmr/{account[3]}/{uname}/{tag}", headers={"user-agent": Secrets.uagentHeader})
                         # Error handling
                         if MMR.status_code != 200:
                             # Skip accounts that are unranked
@@ -128,7 +126,6 @@ class accManagement(commands.Cog):
 
 
 # --------------------------------
-
 
     @quickaccs.command(name="list")
     async def list(self, ctx):

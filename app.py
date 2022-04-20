@@ -2,11 +2,13 @@
 import time
 import os
 import logging
+import asyncio
+from click import pass_context
 
 import discord
 from discord.ext import commands
-from quart.helpers import make_response
 from quart import Quart, redirect, url_for, render_template, request
+from quart.helpers import make_response
 from quart_discord import DiscordOAuth2Session, RateLimited, requires_authorization, Unauthorized, AccessDenied
 import requests
 from sqlalchemy import create_engine, text
@@ -16,12 +18,13 @@ from helpers.Helper import requiresAdmin, validRanks, parseDashboardChoices
 from secrets.secrets import Secrets
 from blueprints.api import blueprint
 
+
 logging.basicConfig(level=logging.INFO, filename="Logs.log")
 app = Quart(__name__)
 # Load in the pages
 app.register_blueprint(blueprint, url_prefix="/api")
 
-CSRFProtect(app)
+CSRFProtect(app)  # Wacky stuff to make the site more secure
 
 engine = create_engine(
     f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
@@ -31,7 +34,8 @@ timeout_time = 2700
 refresh_time = time.time() + timeout_time
 
 
-CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers")
+CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers",
+                         headers={"user-agent": Secrets.uagentHeader})
 # Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
 valid_ranks = validRanks()
 
@@ -139,9 +143,6 @@ async def support():
 bot = commands.Bot(command_prefix=">",
                    description="Razebot, the ultimate discord bot for VALORANT", help_command=None)
 
-Globalextensions = ["bot.accManagement",
-                    "bot.listeners", "bot.other", "bot.rankCheck"]
-
 
 @bot.event
 async def on_ready():
@@ -158,7 +159,11 @@ async def status_task():
     await bot.change_presence(activity=discord.Game('VALORANT or something'))
 
 
-def run():
+Globalextensions = ["bot.accManagement",
+                    "bot.listeners", "bot.other", "bot.rankCheck"]
+
+
+def run():  # Credit to Muffin's Dev#6537 for some of this code
     bot.loop.create_task(app.run_task(
         host=Secrets.webhost, port=Secrets.webport, debug=True))
     for extension in Globalextensions:
