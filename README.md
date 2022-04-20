@@ -1,8 +1,8 @@
 <p align="center">
-    <a href="https://github.com/MaximumMaxxx/Razebot/blob/web/assets/Valobot%20logo%20raze%20thicckened.png?raw=true">
-        <img src="assets/Valobot logo raze thicckened.png" alt="Logo" width="160" height="160">
+    <a href="https://razebot.com">
+        <img src="static/images/Valobot logo raze thicckened.png" alt="Logo" width="160" height="160">
     </a>
-<h5 align="center"> Razebot</h5>
+<h5 align="center">Razebot</h5>
 </p>
 
 <h3>Notice</h3>
@@ -14,11 +14,11 @@ Additionally it'll probably work on Windows but I can't guarentee it.
 - Automatic role assignment
 - Fully integrated rank checking
 - Saves all user data to SQL database
-- Web Dashboard
+- Web or slash command based account management
 
 Rank check example
 
-![Rank Checking](https://github.com/MaximumMaxxx/Razebot/blob/main/assets/razebot%20sample.png?raw=true)
+![Rank Checking](static/images/rankcheck.gif)
 
 <h3>Hosting guide</h3>
 
@@ -46,20 +46,19 @@ using this [Docker Container](https://hub.docker.com/_/mysql)
 
 [Inspirtation and guidence: Valorant Rank Yoinker](https://github.com/isaacKenyon/VALORANT-rank-yoinker)
 
-Also a bunch of articles and stack overflow helps.
+Also a bunch of articles and stack overflow questions.
 
-Additionally I can't deny that [Valorant Labs](https://top.gg/bot/702201518329430117) was here before me and has some more features. 
+Additionally I can't deny that [Valorant Labs](https://top.gg/bot/702201518329430117) was here before me and has some atleast currently missing features. 
 
 <h3>All the people who helped</h3>
 
-Lacas - convincing me to multi-server the bot
+Lacas - convincing me to add multi-server support the bot
 
 Danika - Emotional support
 
-Yang Yang - Suggesting features
+Yang Yang - Suggesting features and testing
 
 Rogue - testing and some dev help
-
 
 Avery - Initially teaching me to do SQL stuff
 

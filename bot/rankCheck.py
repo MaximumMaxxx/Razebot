@@ -35,7 +35,6 @@ class Rankcheck(commands.Cog):
             bot=self.bot,
             operation="Q",
             engine=engine)
-        print(returned)
         embed, msg = returned
         await msg.edit(content=None, embed=embed)
 
@@ -57,6 +56,30 @@ class Rankcheck(commands.Cog):
 
         msg = await ctx.interaction.original_message()
         await msg.edit(content=None, embed=get_acc((None, None, account, region)))
+
+    @commands.slash_command(name="rankcheckuser", description="Get the stats of an account owned by a discord user")
+    async def rcuser(self, ctx: discord.ApplicationContext, user: discord.User, region: str = option(name="Region", description=f"The region the account is in. If not specified will default to the server's default region.", choices=regionsChoice())):\
+            # The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
+
+        if type(region) is not str:
+            with engine.connect() as conn:
+                result = conn.execute(
+                    text(
+                        f"SELECT * FROM set{ctx.guild.id} WHERE setting = 'region'")
+                )
+                # Pull the region from the settings
+                region = result.all()[0][2]
+
+        returned = await getAccFromList(
+            ctx=ctx,
+            bot=self.bot,
+            operation="M",
+            engine=engine,
+            id=user.id,
+            ownerShip=f"{user.name}'s"
+        )
+        embed, msg = returned
+        await msg.edit(content=None, embed=embed)
 
 
 def setup(bot):
