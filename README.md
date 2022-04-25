@@ -5,6 +5,8 @@
 <h5 align="center">Razebot</h5>
 </p>
 
+Docs for commands are avaliable [here](/static/docs/commands.md) or with the `/docs` command
+---
 <h3>Notice</h3>
 This bot requires Python 3.8+ to function. This is due to Pycord. 
 Additionally it'll probably work on Windows but I can't guarentee it.
