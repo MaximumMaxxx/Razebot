@@ -147,6 +147,12 @@ class Other(commands.Cog):
                 title="API is up", description="All systems are operational", color=discord.Color.green())
         await ctx.respond(embed=embed)
 
+    # Link to the docs on githut
+    @commands.slash_command(name="docs", description="Links to the documentation on GitHub")
+    async def docs(self, ctx):
+        await ctx.respond(embed=discord.Embed(
+            title="Documentation", description="Docs can be found here: [Docs](github.com/MaximumMaxxx/Razebot/blob/main/docs/commands.md)", color=discord.Color.green()))
+
 
 def setup(bot):
     bot.add_cog(Other(bot))
