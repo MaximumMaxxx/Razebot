@@ -74,15 +74,24 @@ async def logout():
     return redirect(url_for(".home"))
 
 
-@app.route("/privacy/")
-async def privacy():
-    return await render_template("privacyPolicy.html")
+@app.route("/boringPrivacyPolicy/")
+async def BoringPrivacy():
+    return await render_template("boringPrivacyPolicy.html")
 
 
 @app.route("/callback/")
 async def callback():
     await discordd.callback()
     return redirect(url_for(".home"))
+
+
+@app.route("/privacy/")
+async def privacyPolicy():
+    if await discordd.authorized:
+        logged = True
+        user = await discordd.fetch_user()
+        return await render_template("privacyPolicy.html", logged=logged, discord_url="/serverselect", logged_in=[True, user.avatar_url, user.name])
+    return await render_template("privacyPolicy.html", logged=logged, discord_url="/serverselect", logged_in=[False])
 
 
 @app.route("/serverselect")
