@@ -1,5 +1,5 @@
 import discord
-from helpers.Helper import CreateAccTable, AddAcc, RmAcc, compTiers
+from lib.Helper import CreateAccTable, AddAcc, RmAcc, compTiers
 from sqlalchemy import engine, text
 import math
 import requests

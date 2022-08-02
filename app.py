@@ -1,11 +1,10 @@
 # Code slightly stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
 import time
 import os
+from os import environ
 import logging
-import asyncio
-from click import pass_context
 
-import discord
+
 from discord.ext import commands
 from quart import Quart, redirect, url_for, render_template, request
 from quart.helpers import make_response
@@ -13,11 +12,12 @@ from quart_discord import DiscordOAuth2Session, RateLimited, requires_authorizat
 import requests
 from sqlalchemy import create_engine, text
 from quart_csrf import CSRFProtect
+from dotenv import load_dotenv
 
-from helpers.Helper import requiresAdmin, validRanks, parseDashboardChoices
-from secrets.secrets import Secrets
+from lib.Helper import requiresAdmin, validRanks, parseDashboardChoices
 from blueprints.api import blueprint
 
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO, filename="Logs.log")
 app = Quart(__name__)
@@ -27,7 +27,7 @@ app.register_blueprint(blueprint, url_prefix="/api")
 CSRFProtect(app)  # Wacky stuff to make the site more secure
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
+    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
 
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
 timeout_time = 2700
@@ -35,19 +35,20 @@ refresh_time = time.time() + timeout_time
 
 
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers",
-                         headers={"user-agent": Secrets.uagentHeader})
+                         headers={"user-agent": environ.get('uagentHeader')})
 # Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
 valid_ranks = validRanks()
 
 
-app.secret_key = Secrets.websecretkey
+app.secret_key = environ.get('websecretkey')
+app.config["DISCORD_CLIENT_ID"] = environ.get('dscclientid')
+app.config["DISCORD_CLIENT_SECRET"] = environ.get('dscclientsecret')
+app.config["DISCORD_REDIRECT_URI"] = environ.get('dscredirecturi')
+app.config["DISCORD_BOT_TOKEN"] = environ.get('bottoken')
 
 # Remove this when going into production
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
-app.config["DISCORD_CLIENT_ID"] = Secrets.dscclientid
-app.config["DISCORD_CLIENT_SECRET"] = Secrets.dscclientsecret
-app.config["DISCORD_REDIRECT_URI"] = Secrets.dscredirecturi
-app.config["DISCORD_BOT_TOKEN"] = Secrets.bottoken
+
 
 discordd = DiscordOAuth2Session(app)
 
@@ -174,7 +175,7 @@ Globalextensions = ["bot.accManagement",
 
 def run():  # Credit to Muffin's Dev#6537 for some of this code
     bot.loop.create_task(app.run_task(
-        host=Secrets.webhost, port=Secrets.webport, debug=True))
+        host=environ.get('webhost'), port=environ.get('webport'), debug=True))
     for extension in Globalextensions:
         try:
             bot.load_extension(extension)
@@ -183,7 +184,7 @@ def run():  # Credit to Muffin's Dev#6537 for some of this code
                 extension, error))
             logging.error(
                 f"{extension} failed to load [{error}]")
-    bot.run(Secrets.bottoken)
+    bot.run(environ.get('bottoken'))
 
 
 if __name__ == "__main__":
