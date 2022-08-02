@@ -11,7 +11,7 @@ from lib.accHelpers import addHelper, removeHelper, listHelper
 
 
 engine = create_engine(
-    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
+    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
 
 
 class accManagement(commands.Cog):
