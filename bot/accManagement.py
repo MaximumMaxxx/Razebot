@@ -11,7 +11,7 @@ from lib.accHelpers import addHelper, removeHelper, listHelper
 
 
 engine = create_engine(
-    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
+    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
 
 
 class accManagement(commands.Cog):
@@ -127,7 +127,6 @@ class accManagement(commands.Cog):
 
 
 # --------------------------------
-
 
     @quickaccs.command(name="list")
     async def list(self, ctx):

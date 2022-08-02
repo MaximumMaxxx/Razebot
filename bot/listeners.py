@@ -8,7 +8,7 @@ from app import setting
 
 
 engine = create_engine(
-    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
+    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
 
 
 class Listeners(commands.Cog):

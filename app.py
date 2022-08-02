@@ -27,7 +27,7 @@ app.register_blueprint(blueprint, url_prefix="/api")
 CSRFProtect(app)  # Wacky stuff to make the site more secure
 
 engine = create_engine(
-    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
+    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
 
 # Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
 timeout_time = 2700

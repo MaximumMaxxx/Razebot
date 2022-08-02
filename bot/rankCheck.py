@@ -8,7 +8,7 @@ from lib.Helper import compTiers as ct, regionsChoice
 from lib.accHelpers import getAccFromList, get_acc
 
 engine = create_engine(
-    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
+    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
 
 
 class Rankcheck(commands.Cog):

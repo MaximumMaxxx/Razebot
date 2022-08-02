@@ -11,7 +11,7 @@ from lib.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSetti
 
 
 engine = create_engine(
-    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
+    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
 
 
 class Other(commands.Cog):
