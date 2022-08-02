@@ -1,10 +1,8 @@
 # Code slightly stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
-import time
-import os
 from os import environ
 import logging
 
-
+import discord
 from discord.ext import commands
 from quart import Quart, redirect, url_for, render_template, request
 from quart.helpers import make_response
@@ -12,12 +10,10 @@ from quart_discord import DiscordOAuth2Session, RateLimited, requires_authorizat
 import requests
 from sqlalchemy import create_engine, text
 from quart_csrf import CSRFProtect
-from dotenv import load_dotenv
 
+from lib.ormDefinitions import Base
 from lib.Helper import requiresAdmin, validRanks, parseDashboardChoices
 from blueprints.api import blueprint
-
-load_dotenv()
 
 logging.basicConfig(level=logging.INFO, filename="Logs.log")
 app = Quart(__name__)
@@ -27,11 +23,8 @@ app.register_blueprint(blueprint, url_prefix="/api")
 CSRFProtect(app)  # Wacky stuff to make the site more secure
 
 engine = create_engine(
-    environ.get('dburl'), echo=environ.get('echo'), future=environ.get('future'))
-
-# Refreshes the SQL connection whever called to prevent sql timeout errors which are annoying
-timeout_time = 2700
-refresh_time = time.time() + timeout_time
+    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
+Base.metadata.create_all(engine)
 
 
 CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers",
@@ -47,7 +40,7 @@ app.config["DISCORD_REDIRECT_URI"] = environ.get('dscredirecturi')
 app.config["DISCORD_BOT_TOKEN"] = environ.get('bottoken')
 
 # Remove this when going into production
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
+environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
 
 
 discordd = DiscordOAuth2Session(app)
@@ -166,7 +159,7 @@ async def on_ready():
 
 
 async def status_task():
-    await bot.change_presence(activity=discord.Game('VALORANT or something'))
+    await bot.change_presence(activity=discord.Game(environ.get("playing_note")))
 
 
 Globalextensions = ["bot.accManagement",
