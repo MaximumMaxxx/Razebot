@@ -1,14 +1,15 @@
+from os import environ
+
 from quart import Blueprint, render_template, abort, request, redirect
 from sqlalchemy import create_engine, text
 from quart_discord import requires_authorization
-
-from secrets.secrets import Secrets
-
+from dotenv import load_dotenv
 
 blueprint = Blueprint("api", __name__)
 
+load_dotenv()
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
+    url=environ.get("dburl"), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
 
 
 @blueprint.route('/')
