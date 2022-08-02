@@ -3,6 +3,7 @@ requests
 SQLAlchemy
 quart
 git+https://github.com/MaximumMaxxx/Cordless-Quart-Discord
-git+https://github.com/Pycord-Development/pycord
+pycord
 Quart-Csrf
 pymysql
+python-dotenv
