@@ -1,15 +1,17 @@
 import logging
+from os import environ
+
 import discord
 from discord.commands import option
 from discord.ext import commands
 from sqlalchemy import create_engine, text
 import requests
 
-from secrets.secrets import Secrets
-from helpers.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
+from lib.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
+
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
+    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
 
 
 class Other(commands.Cog):
@@ -132,11 +134,11 @@ class Other(commands.Cog):
         resp = ""
 
         request = requests.get("https://valorant-api.com/v1/competitivetiers",
-                               headers={"user-agent": Secrets.uagentHeader})
+                               headers={"user-agent": environ.get('uagentHeader')})
         if request.status_code != 200:
             resp += "Icon API is down or not responding\n"
         request = requests.get(
-            "https://api.henrikdev.xyz/valorant/v1/version/na", headers={"user-agent": Secrets.uagentHeader})
+            "https://api.henrikdev.xyz/valorant/v1/version/na", headers={"user-agent": environ.get('uagentHeader')})
         if request.status_code != 200:
             resp += f"Rank API is down or not responding status code: {request.status_code}\n"
         if resp != "":

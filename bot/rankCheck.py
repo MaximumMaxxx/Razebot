@@ -2,13 +2,13 @@ import discord
 from discord.ext import commands
 from discord.commands import option
 from sqlalchemy import create_engine, text
+from os import environ
 
-from helpers.Helper import compTiers as ct, regionsChoice
-from helpers.accHelpers import getAccFromList, get_acc
-from secrets.secrets import Secrets
+from lib.Helper import compTiers as ct, regionsChoice
+from lib.accHelpers import getAccFromList, get_acc
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
+    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
 
 
 class Rankcheck(commands.Cog):

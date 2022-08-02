@@ -1,16 +1,17 @@
+from os import environ
+
 import discord
 from discord.commands import option, OptionChoice
 from discord.ext import commands
 from sqlalchemy import create_engine, text
 import requests
 
-from secrets.secrets import Secrets
-from helpers.Helper import CreateAccTable, validRanks
-from helpers.accHelpers import addHelper, removeHelper, listHelper
+from lib.Helper import CreateAccTable, validRanks
+from lib.accHelpers import addHelper, removeHelper, listHelper
 
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
+    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
 
 
 class accManagement(commands.Cog):
@@ -52,7 +53,7 @@ class accManagement(commands.Cog):
                     for account in author_accs:
                         uname, tag = account[2].split('#')
                         MMR = requests.get(
-                            f"https://api.henrikdev.xyz/valorant/v1/mmr/{account[3]}/{uname}/{tag}", headers={"user-agent": Secrets.uagentHeader})
+                            f"https://api.henrikdev.xyz/valorant/v1/mmr/{account[3]}/{uname}/{tag}", headers={"user-agent": environ.get('uagentHeader')})
                         # Error handling
                         if MMR.status_code != 200:
                             # Skip accounts that are unranked
@@ -126,6 +127,7 @@ class accManagement(commands.Cog):
 
 
 # --------------------------------
+
 
     @quickaccs.command(name="list")
     async def list(self, ctx):

@@ -1,4 +1,4 @@
-import time
+from os import environ
 
 import discord
 from discord import commands
@@ -6,10 +6,9 @@ from discord.ext import commands
 from sqlalchemy import create_engine, text
 from app import setting
 
-from secrets.secrets import Secrets
 
 engine = create_engine(
-    f"mysql+pymysql://{Secrets.dbuname}:{Secrets.dbpassword}@{Secrets.dbhost}/{Secrets.database}", echo=Secrets.echo, future=Secrets.future)
+    f"mysql+pymysql://{environ.get('dbuname')}:{environ.get('dbpassword')}@{environ.get('dbhost')}/{environ.get('database')}", echo=environ.get('echo'), future=environ.get('future'))
 
 
 class Listeners(commands.Cog):
