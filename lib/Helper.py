@@ -1,3 +1,5 @@
+from os import environ
+
 from discord import List
 from quart_discord import current_app
 import requests
@@ -9,8 +11,6 @@ import functools
 import logging
 from discord.commands import OptionChoice
 
-from secrets.secrets import Secrets
-
 
 def avaliableSettings():
     return(["region", "prefix"])
@@ -21,7 +21,7 @@ def validRanks():
 
 
 def compTiers():
-    return requests.get("https://valorant-api.com/v1/competitivetiers", headers={"user-agent": Secrets.uagentHeader})
+    return requests.get("https://valorant-api.com/v1/competitivetiers", headers={"user-agent": environ.get('uagentHeader')})
 
 
 def helpMenus():

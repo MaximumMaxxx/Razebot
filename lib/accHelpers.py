@@ -1,3 +1,5 @@
+from os import environ
+
 import discord
 from lib.Helper import CreateAccTable, AddAcc, RmAcc, compTiers
 from sqlalchemy import engine, text
@@ -6,8 +8,6 @@ import requests
 import logging
 import asyncio
 from PIL import ImageColor
-
-from secrets.secrets import Secrets
 
 
 async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
@@ -181,7 +181,7 @@ def get_acc(account: str) -> discord.Embed:
 
     try:
         accountReq = requests.get(
-            f"https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag}", headers={"user-agent": Secrets.uagentHeader})
+            f"https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag}", headers={"user-agent": environ.get('uagentHeader')})
 
         if accountReq.status_code == 403:
             logging.info(f"Api is being rate limited")
@@ -202,10 +202,11 @@ def get_acc(account: str) -> discord.Embed:
         return(discord.Embed(title="ERROR", description="Account not found (something went really wrong)", color=discord.Color.red()))
 
     mhRequest = f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive"
-    MH = requests.get(mhRequest, headers={"user-agent": Secrets.uagentHeader})
+    MH = requests.get(mhRequest, headers={
+                      "user-agent": environ.get('uagentHeader')})
     mmrRequest = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}"
     MMR = requests.get(mmrRequest, headers={
-                       "user-agent": Secrets.uagentHeader})
+                       "user-agent": environ.get('uagentHeader')})
 
     logging.info(
         f"Made a request for {acc}#{tag} to \n{mhRequest}\n and \n{mmrRequest}\n got status code {MH.status_code} and {MMR.status_code}")
