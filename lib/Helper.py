@@ -1,15 +1,15 @@
 from os import environ
 
-from discord import List
 from quart_discord import current_app
 import requests
-from sqlalchemy import text
-import sqlalchemy
+from sqlalchemy import select, Session
 from sqlalchemy.engine.base import Engine
 from quart_discord import exceptions
 import functools
 import logging
 from discord.commands import OptionChoice
+
+from lib.ormDefinitions import *
 
 
 def avaliableSettings():
@@ -45,56 +45,47 @@ def avaliableHelpMenus():
     )
 
 
-def CreateAccTable(engine: Engine, id, type):
-    # S signifies a saved accounts table. M signifys a Myaccounts table
-    with engine.connect() as conn:
-        conn.execute(
-            text(f'''CREATE TABLE IF NOT EXISTS {type}{id} (
-            `id` INT NOT NULL AUTO_INCREMENT,
-            `note` VARCHAR(255) NULL,
-            `ign` VARCHAR(255) NULL,
-            `region` VARCHAR(255) NULL,
-            PRIMARY KEY (`id`));
-            ''')
-        )
-
-
 def AddAcc(engine: Engine, user, type, ign, note, region):
-    with engine.connect() as conn:
+    with Session(engine) as session:
         # S signifies a saved accounts table. M signifys a Myaccounts table
-        result = conn.execute(
-            text(f'''select * from {type}{user} where ign like '{ign}';''')
-        )
-        RSLT = result.all()
-        if len(RSLT) != 0:
+        result = select(User).where(
+            User.ign == ign.split("#")[0]).where(User.id == id).first()
+        if result:
             return("duplicate")
-        result = conn.execute(
-            text(f"select * from {type}{user}")
-        )
-        RSLT = result.all()
-        if len(RSLT) == 25 and type == "M":
+        result = select(User).where(User.id == user)
+
+        if len(result) == 25 and type == "M":
             return("maxed")
         else:
             # Name is not in the database
-            conn.execute(
-                text(
-                    f'''INSERT INTO {type}{user} (note,ign,region) VALUES ('{note}','{ign}','{region}')''')
+            name, tag = ign.split("#")
+            user = User(
+                id=user,
+                accounts=[
+                    ValoAccount(
+                        username=name,
+                        tag=tag,
+                        note=note,
+                        acctype=type,
+                        region=region
+                    )
+                ]
             )
+            session.add(user)
             return("sucess")
 
 
 def RmAcc(engine: Engine, user, type, ign):
     # S signifies a saved accounts table. M signifys a Myaccounts table
-    with engine.connect() as conn:
-        result = conn.execute(
-            text(f'''select * from {type}{user} where ign like '{ign}';''')
-        )
-        RSLT = result.all()
-        if len(RSLT) != 0:
+    with Session(engine) as session:
+        result = select(User).where(User.id == user).where(
+            User.username == ign.split("#")[0]).first()
+        if not result:
             # Name is not in the database
-            conn.execute(
-                text(f'''DELETE FROM {type}{user} WHERE ign like '{ign}' ''')
-            )
+            uname, tag = ign.split("#")
+            useracc = select(ValoAccount).where(ValoAccount.owner_id == user).where(
+                ValoAccount.username == uname).where(ValoAccount.tag == tag).where(ValoAccount.acctype == type).first()
+            session.delete(useracc)
             return("sucess")
         else:
             return("NIDB")

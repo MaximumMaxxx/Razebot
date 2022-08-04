@@ -3,8 +3,9 @@ from os import environ
 import discord
 from discord import commands
 from discord.ext import commands
-from sqlalchemy import create_engine, text
-from app import setting
+from sqlalchemy import create_engine,  select
+from sqlalchemy.orm import Session
+from lib.ormDefinitions import DisServer, Role
 
 
 engine = create_engine(
@@ -18,66 +19,43 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        with engine.connect() as conn:
-            conn.execute(
-                # Settings table
-                text(f'''CREATE TABLE IF NOT EXISTS set{guild.id} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `setting` VARCHAR(255) NULL UNIQUE,
-                `value` VARCHAR(255) NULL,
-                PRIMARY KEY (`id`));
-                ''')
-            )
-            conn.execute(
-                # server role table
-                text(f'''CREATE TABLE IF NOT EXISTS rl{guild.id} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `role` VARCHAR(255) NULL UNIQUE,
-                `value` VARCHAR(255) NULL,
-                PRIMARY KEY (`id`));
-                ''')
-            )
-            conn.execute(
-                # Creating some default settings values
-                text(
-                    f"REPLACE INTO set{guild.id} (setting,value) VALUES ('region','{self.default_region}')")
-            )
-            conn.execute(
-                text(
-                    f"REPLACE INTO set{guild.id} (setting,value) VALUES ('max_self_role','None')")
-            )
-            conn.commit()
+        with Session(engine) as session:
+            session.add(
+                DisServer(id=guild.id, region=self.default_region, max_self_role=None))
+            session.commit()
         # Maybe remove before final release
         print(f"Joined a server with the id {guild.id}")
 
     @commands.Cog.listener()
     async def on_guild_leave(self, guild):
-        with engine.connect() as conn:
-            conn.execute(
-                text(f"DROP TABLE set{guild.id()}")
-            )
+        with Session(engine) as session:
+            session.query(DisServer).filter(DisServer.id == guild.id).delete()
+            session.query(Role).filter(Role.server_id == guild.id).delete()
+            session.commit()
         print(f"Left the server with the id {guild.id}")
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if self.bot.user.mentioned_in(message) and message.mention_everyone is False:
-            with engine.connect() as conn:
-                result = conn.execute(
-                    text(f"SELECT * FROM set{message.guild.id}")
-                )
-                settings = result.all()
-            # Converting the cursor output to a dictionary
-            setDict = {}
-            for i in range(len(settings)):
-                setDict[settings[i][1]] = settings[i][2]
+        # This is a basic system check by pinging the bot.
+        if not (self.bot.user.mentioned_in(message) and message.mention_everyone is False):
+            await self.bot.process_commands(message)
 
-            embed = discord.Embed(title="Razebot info",
-                                  description=" ", color=discord.Color.red())
-            embed.add_field(name="Default region", value=setDict["region"])
-            embed.add_field(
-                name="Latency", value=f"{round(self.bot.latency,2)}ms")
+        server: DisServer = select(DisServer).where(
+            DisServer.id == message.guild.id)[0]
 
-            await message.channel.send(embed=embed)
+        await message.channel.send(
+            embed=discord.Embed
+            (
+                title="Razebot info",
+                description=" ", color=discord.Color.red()
+            ).add_field(
+                name="Default region",
+                value=server.region
+            ).add_field(
+                name="Latency",
+                value=f"{round(self.bot.latency,2)}ms"
+            )
+        )
 
         # This line makes your other commands work.
         await self.bot.process_commands(message)

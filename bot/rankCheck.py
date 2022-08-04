@@ -1,11 +1,12 @@
 import discord
 from discord.ext import commands
 from discord.commands import option
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select
 from os import environ
 
 from lib.Helper import compTiers as ct, regionsChoice
 from lib.accHelpers import getAccFromList, get_acc
+from lib.ormDefinitions import *
 
 engine = create_engine(
     environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
@@ -47,12 +48,10 @@ class Rankcheck(commands.Cog):
         await ctx.respond("Working on that ... please wait")
         if type(region) is not str:
             with engine.connect() as conn:
-                result = conn.execute(
-                    text(
-                        f"SELECT * FROM set{ctx.guild.id} WHERE setting = 'region'")
-                )
+                result = select(DisServer).where(DisServer.id == ctx.guild.id).where(
+                    DisServer.default_region == region)
                 # Pull the region from the settings
-                region = result.all()[0][2]
+                region = result[0].default_region
 
         msg = await ctx.interaction.original_message()
         await msg.edit(content=None, embed=get_acc((None, None, account, region)))
@@ -63,12 +62,10 @@ class Rankcheck(commands.Cog):
 
         if type(region) is not str:
             with engine.connect() as conn:
-                result = conn.execute(
-                    text(
-                        f"SELECT * FROM set{ctx.guild.id} WHERE setting = 'region'")
-                )
+                result = select(DisServer).where(DisServer.id == ctx.guild.id).where(
+                    DisServer.default_region == region)
                 # Pull the region from the settings
-                region = result.all()[0][2]
+                region = result[0].default_region
 
         returned = await getAccFromList(
             ctx=ctx,

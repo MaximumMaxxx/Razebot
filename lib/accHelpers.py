@@ -2,12 +2,14 @@ from os import environ
 
 import discord
 from lib.Helper import CreateAccTable, AddAcc, RmAcc, compTiers
-from sqlalchemy import engine, text
+from sqlalchemy import engine, select
 import math
 import requests
 import logging
 import asyncio
 from PIL import ImageColor
+
+from lib.ormDefinitions import ValoAccount
 
 
 async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
@@ -56,32 +58,14 @@ async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engin
             title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red()))
 
 
-async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine):
-    CreateAccTable(engine, ctx.author.id, type)
-    with engine.connect() as conn:
-        result = conn.execute(
-            text(f"SELECT * FROM {type}{ctx.author.id}")
-        )
-        author_accs = result.all()
-
-        if len(author_accs) == 0:
-            embed = discord.Embed(
-                title="ERROR", description="You have not accounts to list. Use /myaccs to add an account", color=discord.Color.red())
-        else:
-            embed = discord.Embed(
-                title="Your Accounts" if type != "Q" else "Your Quick Accounts", color=discord.Color.dark_red())
-            for account in author_accs:
-                embed.add_field(name=account[2], value=account[1])
-        return(embed)
-
-
-async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, operation: str, engine: engine.Engine, id=-1, ownerShip="Your"):
+async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, operation: str, engine: engine.Engine, id=-1, ownerShip="Your"):  # Rewrite this
+    # https://docs.pycord.dev/en/master/ext/pages/index.html <- good
     if id == -1:
         id = ctx.author.id
     with engine.connect() as conn:
-        result = conn.execute(
-            text(f"SELECT * FROM {operation}{id}"))
-        accounts = result.all()  # 5 accounts per page with a left and right arrow
+        accounts = select(ValoAccount).where(ValoAccount.owner ==
+                                             id).where(ValoAccount.acctype == operation)
+
         page = 1
         max_page_count = math.ceil(len(accounts)/5)
         niceType = "quick" if operation == "Q" else "my"

@@ -4,10 +4,12 @@ from os import environ
 import discord
 from discord.commands import option
 from discord.ext import commands
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select, update
+from sqlalchemy.orm import Session
 import requests
 
 from lib.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
+from lib.ormDefinitions import *
 
 
 engine = create_engine(
@@ -20,14 +22,22 @@ class Other(commands.Cog):
 
     @commands.slash_command(name="credits")
     async def credits(self, ctx: discord.ApplicationContext):
-        embed = discord.Embed(title="Credits", description=" ",)
-        embed.add_field(name="Loading Icon by",
-                        value="Krishprakash24gmail via Wikicommons under CC Atribution-sharalike 4.0 International")
-        embed.add_field(name="Wrapper by", value="The Pycord development team")
-        embed.add_field(name="Design inspiration from",
-                        value="Discord developer portal, Mee6, Carl-bot, and many more.", )
-        embed.set_footer(text="Razebot by MaximumMaxx")
-        await ctx.respond(embed=embed)
+        await ctx.respond(
+            embed=discord.Embed(
+                title="Credits",
+                description=" ",).add_field(
+                name="Loading Icon by",
+                value="Krishprakash24gmail via Wikicommons under CC Atribution-sharalike 4.0 International"
+            ).add_field(
+                name="Wrapper by",
+                value="The Pycord development team"
+            ).add_field(
+                name="Design inspiration from",
+                value="Discord developer portal, Mee6, Carl-bot, and many more."
+            ).set_footer(
+                text="Razebot by MaximumMaxx"
+            )
+        )
 
     @commands.slash_command(name="settings")
     async def settings(self,
@@ -35,28 +45,45 @@ class Other(commands.Cog):
                        setting: str = option(
                            name="settings", description="The seting to change", choices=avaliableSettings()),
                        value: str = option(name="value", description="What do you want to set the setting to?")):
-        if setting != None:
-            if setting.lower() in avaliableSettings():
+        if setting == None:
+            await ctx.respond(
+                embed=discord.Embed(
+                    title="Avaliable settings",
+                    description=f"The avaliable help menus are {avaliableSettings()}",
+                    color=discord.Color.green()
+                )
+            )
+            return
 
-                # There should already be a settings table created when the bot first joined so we can just acess it here
-                with engine.connect() as conn:
-                    conn.execute(
-                        text(
-                            f"REPLACE set{ctx.guild.id} (setting,value) VALUES ('{setting.lower()}','{value}')")
-                    )
-                    conn.commit()
-                    logging.info(
-                        f"Updated the setting {setting.lower()} in guild {ctx.guild.id} to {value}")
+        if not setting.lower() in avaliableSettings():
+            await ctx.respond(
+                embed=discord.Embed
+                (
+                    title="Invalid Setting",
+                    description=f"The avaliable settings are {avaliableSettings()}",
+                    color=discord.Color.red()
+                )
+            )
+            return
 
-                embed = discord.Embed(
-                    title=f"{setting} successfully updated", description=f"The changes should take effect immediately", color=discord.Color.green())
-            else:
-                embed = discord.Embed(
-                    title="Invalid Setting", description=f"The avaliable settings are {avaliableSettings()}", color=discord.Color.red())
+        # This part honesty isn't that great, but as far as I know there isn't a way to dynamically
+        with Session(engine) as session:
+            if setting == "region":
+                update(
+                    DisServer
+                ).where(
+                    DisServer.id == ctx.guild.id
+                ).values(
+                    region=value
+                )
 
-        else:
-            embed = discord.Embed(
-                title="Avaliable settings", description=f"The avaliable help menus are {avaliableSettings()}", color=discord.Color.green())
+            session.commit()
+            logging.info(
+                f"Updated the setting {setting.lower()} in guild {ctx.guild.id} to {value}"
+            )
+
+        embed = discord.Embed(
+            title=f"{setting} successfully updated", description=f"The changes should take effect immediately", color=discord.Color.green())
 
         embed.set_footer(text="Razebot by MaximumMaxx")
         await ctx.respond(embed=embed)
@@ -66,39 +93,61 @@ class Other(commands.Cog):
                        role: discord.Role = option(name="role", Required=True),
                        rank: str = option(name="valorant rank", Required=True, choices=validRanks())):
 
-        valid_ranks = validRanks()
-        if rank.lower() in valid_ranks:
-            with engine.connect() as conn:
-                # There should already be a settings table created when the bot first joined so we can just acess it here
-                conn.execute(
-                    text(
-                        f'''REPLACE INTO rl{ctx.guild.id} (role,value) VALUES ('{rank.lower()}','{role.id}')''')
-                )
-                conn.commit()
-                embed = discord.Embed(title=f"{role.name} successfully add or updated",
-                                      description=f"The changes should take effect immediately", color=discord.Color.green())
-
-                result = conn.execute(
-                    text(f"SELECT * FROM rl{ctx.guild.id}")
-                )
-                guild_roles = result.all()
-
-                if not len(guild_roles) == len(valid_ranks):
-                    missingRanks = ""
-                    for rank in validRanks():
-                        isIn = False
-                        for serverRank in guild_roles:
-                            if serverRank[1].lower() == rank.lower():
-                                isIn = True
-                        if not isIn is True:
-                            missingRanks += f"{rank} "
-
-                    await ctx.send(embed=discord.Embed(title="You still have some roles to add",
-                                                       description=f"Please rerun this command for each of the following VALORANT ranks: {missingRanks}").set_footer(text="Razebot by MaximumMaxx")
-                                   )
-        else:
+        if not rank.lower() in validRanks():
             embed = discord.Embed(
-                title="Invalid Rank", description=f"You entered {rank} but the valid options are {valid_ranks}.", color=discord.Color.red())
+                title="Invalid Rank", description=f"You entered {rank} but the valid options are {validRanks}.", color=discord.Color.red())
+
+        with Session(engine) as session:
+            # Since there's no native replace into statement we'll have to do it manually
+            role = select(Role).where(
+                Role.server_id == ctx.guild.id
+            ).where(
+                Role.valo_name == rank.lower()
+            )
+
+            if not role:
+                # Just insert the new role
+                stmt = select(DisServer).where(DisServer.id == ctx.guild.id)
+                server = session.scalars(stmt).one()
+                server.roles.append(
+                    Role(
+                        server_id=DisServer.id,
+                        role_id=role.id,
+                        valo_name=rank.lower()
+                    )
+                )
+                session.add(role)
+            else:
+                # Update the role
+                stmt = select(Role).where(
+                    Role.server_id == ctx.guild.id
+                ).where(
+                    Role.valo_name == rank.lower()
+                )
+                servrole = session.scalars(stmt).one()
+                servrole.role_id = role.id
+            session.commit()
+
+        embed = discord.Embed(title=f"{role.name} successfully add or updated",
+                              description=f"The changes should take effect immediately", color=discord.Color.green())
+
+        result = select(Role).where(Role.server_id == ctx.guild.id).where(
+            Role.valo_name == rank.lower())
+        guild_roles = result.all()
+
+        if not len(guild_roles) == len(validRanks):
+            missingRanks = ""
+            for rank in validRanks():  # This algorithm is dumb and could be O(n)
+                isIn = False
+                for serverRank in guild_roles:
+                    if serverRank[1].lower() == rank.lower():
+                        isIn = True
+                if not isIn is True:
+                    missingRanks += f"{rank} "
+
+            await ctx.send(embed=discord.Embed(title="You still have some roles to add",
+                                               description=f"Please rerun this command for each of the following VALORANT ranks: {missingRanks}").set_footer(text="Razebot by MaximumMaxx")
+                           )
 
         embed.set_footer(text="Razebot by MaximumMaxx")
         await ctx.respond(embed=embed)
