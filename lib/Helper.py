@@ -1,8 +1,8 @@
-from os import environ
+import json
 
 from quart_discord import current_app
 import requests
-from sqlalchemy import select, Session
+from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
 from quart_discord import exceptions
 import functools
@@ -21,7 +21,8 @@ def validRanks():
 
 
 def compTiers():
-    return requests.get("https://valorant-api.com/v1/competitivetiers", headers={"user-agent": environ.get('uagentHeader')})
+    with open("lib/valorant_ranks.json") as f:
+        return json.load(f)
 
 
 def helpMenus():
@@ -45,56 +46,76 @@ def avaliableHelpMenus():
     )
 
 
-def AddAcc(engine: Engine, user, type, ign, note, region):
+def AddAcc(engine: Engine, user_id: int, type, ign, note, region):
     with Session(engine) as session:
         # S signifies a saved accounts table. M signifys a Myaccounts table
-        result = select(User).where(
-            User.ign == ign.split("#")[0]).where(User.id == id).first()
-        if result:
-            return("duplicate")
-        result = select(User).where(User.id == user)
+        result = session.query(
+            ValoAccount
+        ).filter(
+            ValoAccount.username == ign.split("#")[0]
+        ).filter(
+            ValoAccount.owner_id == str(user_id)
+        ).one_or_none()
 
-        if len(result) == 25 and type == "M":
+        if result is not None:
+            return("duplicate")
+
+        result = session.query(
+            ValoAccount
+        ).filter(
+            ValoAccount.owner_id == str(user_id)
+        ).where(
+            ValoAccount.acctype == type
+        ).all()
+
+        if len(result) >= 25 and type == "M":
             return("maxed")
         else:
             # Name is not in the database
             name, tag = ign.split("#")
-            user = User(
-                id=user,
-                accounts=[
-                    ValoAccount(
-                        username=name,
-                        tag=tag,
-                        note=note,
-                        acctype=type,
-                        region=region
-                    )
-                ]
+            valoAcc = ValoAccount(
+                username=name,
+                tag=tag,
+                note=note,
+                acctype=type,
+                region=region,
+                owner_id=str(user_id)
             )
-            session.add(user)
-            return("sucess")
+
+            session.add(valoAcc)
+            session.commit()
+            return("success")
 
 
 def RmAcc(engine: Engine, user, type, ign):
     # S signifies a saved accounts table. M signifys a Myaccounts table
+    acc, tag = ign.split("#")
     with Session(engine) as session:
-        result = select(User).where(User.id == user).where(
-            User.username == ign.split("#")[0]).first()
-        if not result:
-            # Name is not in the database
-            uname, tag = ign.split("#")
-            useracc = select(ValoAccount).where(ValoAccount.owner_id == user).where(
-                ValoAccount.username == uname).where(ValoAccount.tag == tag).where(ValoAccount.acctype == type).first()
-            session.delete(useracc)
-            return("sucess")
-        else:
-            return("NIDB")
+        result = session.query(
+            ValoAccount
+        ).filter(
+            ValoAccount.username == acc
+        ).filter(
+            ValoAccount.owner_id == str(user)
+        ).filter(
+            ValoAccount.acctype == type
+        ).filter(
+            ValoAccount.tag == tag
+        ).one_or_none()
+
+    if result is None:
+        return("NIDB")
+
+    session.delete(result)
+    session.commit()
+
+    return("sucess")
 
 
 def requiresAdmin(view):
     """A simple decorator that raises `quart_discord.Unauthoirzed` if the user does not have permission to manage bots"""
 
-    @functools.wraps(view)
+    @ functools.wraps(view)
     async def wrapper(*args, **kwargs):
         user = await current_app.discord.fetch_user()
         hasPermission = False
@@ -120,7 +141,6 @@ def parseDashboardChoices(setting: str, value: str):
         "region": ["select", "_", [["NA", False], ["EU", False], ["AP", False], ["KR", False]]],
         "max_self_role": ["select", "_", [[Value, False if Value != value else True] for Value in validRanks()]]
     }
-    logging.warning(f"Setting {setting} and Value {value}")
     formatted = lookupTable[setting]
     formatted[1] = setting
     if formatted[0] == "select":
