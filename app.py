@@ -8,10 +8,11 @@ from quart import Quart, redirect, url_for, render_template, request
 from quart.helpers import make_response
 from quart_discord import DiscordOAuth2Session, RateLimited, requires_authorization, Unauthorized, AccessDenied
 import requests
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 from quart_csrf import CSRFProtect
 
-from lib.ormDefinitions import Base
+from lib.ormDefinitions import Base, DisServer
 from lib.Helper import requiresAdmin, validRanks, parseDashboardChoices
 from blueprints.api import blueprint
 
@@ -27,8 +28,6 @@ engine = create_engine(
 Base.metadata.create_all(engine)
 
 
-CompTiers = requests.get("https://valorant-api.com/v1/competitivetiers",
-                         headers={"user-agent": environ.get('uagentHeader')})
 # Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
 valid_ranks = validRanks()
 
@@ -103,11 +102,13 @@ async def serverselect():
 async def dashboard(guild):
     # Settings is formatted like
     user = await discordd.fetch_user()
-    with engine.connect() as conn:
-        rslt = conn.execute(text(f"SELECT * FROM set{guild}"))
-    serverSettings = rslt.all()
-    settings = [parseDashboardChoices(setting, value)
-                for id, setting, value in serverSettings]
+    with Session(engine) as session:
+        stmt = select(DisServer).where(DisServer.guild_id == guild)
+        result = session.scalars(stmt).one()  # TODO: Make this at all work
+
+    settings = [
+        parseDashboardChoices(setting, value)
+        for id, setting, value in serverSettings]
     print(settings)
     return await render_template("dashboard.html", settings=settings, logged_in=[True, user.avatar_url, user.name], server=guild
                                  )
