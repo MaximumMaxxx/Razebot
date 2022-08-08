@@ -94,16 +94,23 @@ class Other(commands.Cog):
                        rank: str = option(name="valorant rank", Required=True, choices=validRanks())):
 
         if not rank.lower() in validRanks():
-            embed = discord.Embed(
-                title="Invalid Rank", description=f"You entered {rank} but the valid options are {validRanks}.", color=discord.Color.red())
+            await ctx.respond(
+                embed=discord.Embed(
+                    title="Invalid Rank", description=f"You entered {rank} but the valid options are {validRanks}.", color=discord.Color.red()
+                ).set_footer(
+                    text="Razebot by MaximumMaxx"
+                )
+            )
+            return
 
         with Session(engine) as session:
             # Since there's no native replace into statement we'll have to do it manually
-            role = select(Role).where(
+            query = select(Role).where(
                 Role.server_id == ctx.guild.id
             ).where(
                 Role.valo_name == rank.lower()
             )
+            role = session.execute(query).first()
 
             if not role:
                 # Just insert the new role
@@ -128,29 +135,37 @@ class Other(commands.Cog):
                 servrole.role_id = role.id
             session.commit()
 
-        embed = discord.Embed(title=f"{role.name} successfully add or updated",
-                              description=f"The changes should take effect immediately", color=discord.Color.green())
+        with Session(engine) as session:
+            result = select(Role).where(Role.server_id == ctx.guild.id).where(
+                Role.valo_name == rank.lower())
+            guild_roles = session.scalars(result).all()
 
-        result = select(Role).where(Role.server_id == ctx.guild.id).where(
-            Role.valo_name == rank.lower())
-        guild_roles = result.all()
+        # Make a set of lowered valid ranks
+        valid_set = set(map(lambda x: x.lower(), validRanks()))
+        if len(guild_roles) == len(valid_set):
+            await ctx.respond(
+                embed=discord.embed(
+                    title=f"{role} set successfully",
+                    description="Changes should take effect immediately",
+                ).set_footer(
+                    text="Razebot by MaximumMaxx"
+                )
+            )
+            return
 
-        if not len(guild_roles) == len(validRanks):
-            missingRanks = ""
-            for rank in validRanks():  # This algorithm is dumb and could be O(n)
-                isIn = False
-                for serverRank in guild_roles:
-                    if serverRank[1].lower() == rank.lower():
-                        isIn = True
-                if not isIn is True:
-                    missingRanks += f"{rank} "
+        missingRanks = ""
+        for rank in validRanks():
+            if rank.lower() in valid_set:
+                missingRanks += f"{rank} "
 
-            await ctx.send(embed=discord.Embed(title="You still have some roles to add",
-                                               description=f"Please rerun this command for each of the following VALORANT ranks: {missingRanks}").set_footer(text="Razebot by MaximumMaxx")
-                           )
-
-        embed.set_footer(text="Razebot by MaximumMaxx")
-        await ctx.respond(embed=embed)
+        await ctx.send(
+            embed=discord.Embed(
+                title="You still have some roles to add",
+                description=f"Please rerun this command for each of the following VALORANT ranks: {missingRanks}"
+            ).set_footer(
+                text="Razebot by MaximumMaxx"
+            )
+        )
 
     @commands.slash_command(name="help", description="Outputs a short description of how a command works and links to Razebot.com for further reading.")
     async def help(self, ctx: discord.ApplicationContext,
@@ -199,7 +214,7 @@ class Other(commands.Cog):
         await ctx.respond(embed=embed)
 
     # Link to the docs on githut
-    @commands.slash_command(name="docs", description="Links to the documentation on GitHub")
+    @ commands.slash_command(name="docs", description="Links to the documentation on GitHub")
     async def docs(self, ctx):
         await ctx.respond(embed=discord.Embed(
             title="Documentation", description="Docs can be found here: [Docs](github.com/MaximumMaxxx/Razebot/blob/main/docs/commands.md)", color=discord.Color.green()))

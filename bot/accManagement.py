@@ -5,7 +5,7 @@ from discord.ext import commands
 from sqlalchemy import create_engine, select
 import requests
 
-from lib.Helper import CreateAccTable, validRanks
+from lib.Helper import validRanks
 from lib.accHelpers import addHelper, removeHelper, listHelper
 from lib.ormDefinitions import *
 
@@ -153,7 +153,6 @@ class accManagement(commands.Cog):
 
 
 # --------------------------------
-
 
     @quickaccs.command(name="list")
     async def list(self, ctx):

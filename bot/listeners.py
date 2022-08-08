@@ -1,3 +1,4 @@
+from http import server
 from os import environ
 
 import discord
@@ -21,16 +22,29 @@ class Listeners(commands.Cog):
     async def on_guild_join(self, guild):
         with Session(engine) as session:
             session.add(
-                DisServer(id=guild.id, region=self.default_region, max_self_role=None))
+                DisServer(
+                    server_id=str(guild.id),
+                    region=self.default_region,
+                    max_self_role=None
+                )
+            )
             session.commit()
         # Maybe remove before final release
-        print(f"Joined a server with the id {guild.id}")
+        print(f"Joined a server with the id {guild.server_id}")
 
     @commands.Cog.listener()
     async def on_guild_leave(self, guild):
         with Session(engine) as session:
-            session.query(DisServer).filter(DisServer.id == guild.id).delete()
-            session.query(Role).filter(Role.server_id == guild.id).delete()
+            session.query(
+                DisServer
+            ).filter(
+                DisServer.server_id == str(guild.id)
+            ).delete()
+            session.query(
+                Role
+            ).where(
+                Role.server_id == str(guild.id)
+            ).delete()
             session.commit()
         print(f"Left the server with the id {guild.id}")
 
@@ -39,9 +53,14 @@ class Listeners(commands.Cog):
         # This is a basic system check by pinging the bot.
         if not (self.bot.user.mentioned_in(message) and message.mention_everyone is False):
             await self.bot.process_commands(message)
+            return
 
-        server: DisServer = select(DisServer).where(
-            DisServer.id == message.guild.id)[0]
+        with Session(engine) as session:
+            server: DisServer = session.query(
+                DisServer
+            ).filter(
+                DisServer.server_id == str(message.guild.id)
+            ).one_or_none()
 
         await message.channel.send(
             embed=discord.Embed
@@ -54,6 +73,8 @@ class Listeners(commands.Cog):
             ).add_field(
                 name="Latency",
                 value=f"{round(self.bot.latency,2)}ms"
+            ).set_footer(
+                text="Razebot by MaximumMaxx"
             )
         )
 
