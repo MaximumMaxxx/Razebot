@@ -1,19 +1,21 @@
-from os import environ
+from collections import namedtuple
+import asyncio
+import time
 
 import discord
-from lib.Helper import CreateAccTable, AddAcc, RmAcc, compTiers
-from sqlalchemy import engine, select
-import math
+from lib.Helper import AddAcc, RmAcc, compTiers
+from sqlalchemy import engine
+from sqlalchemy.orm import Session
 import requests
 import logging
-import asyncio
+import aiohttp
 from PIL import ImageColor
 
 from lib.ormDefinitions import ValoAccount
+from bot.views.accountSelector import accountSelectorFactory
 
 
 async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
-    CreateAccTable(engine, ctx.author.id, type)
     try:
         account, tag = account.split("#") if account != None else None
     except ValueError:
@@ -29,9 +31,9 @@ async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.E
                     title="ERROR", description="That account has already been saved by you", color=discord.Color.red()))
             elif returned == "maxed":
                 return(discord.Embed(title="ERROR", description="Listen man, you have 25 accounts saved. Sorry but this is an intervention. Please reconsider your life choices leading up to here.",  color=discord.Color.red()))
-            elif returned == "sucess":
+            elif returned == "success":
                 return(discord.Embed(
-                    title="Sucess", description="Your account has successfully been added to the database", color=discord.Color.green()))
+                    title="Success", description="Your account has successfully been added to the database", color=discord.Color.green()))
 
         else:
             return(discord.Embed(
@@ -43,7 +45,6 @@ async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.E
 
 
 async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine, account: str):
-    CreateAccTable(engine, ctx.author.id, type)
     try:
         account, tag = account.split("#") if account != None else None
     except ValueError:
@@ -58,174 +59,181 @@ async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engin
             title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red()))
 
 
+async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine):
+    with Session(engine) as session:
+        author_accs: "list[ValoAccount]" = session.query(ValoAccount).filter(
+            ValoAccount.owner_id == ctx.author.id).filter(ValoAccount.acctype == type).all()
+
+    if not author_accs:
+        embed = discord.Embed(
+            title="ERROR", description=f"You have not accounts to list. Use /{'myaccs' if type != 'Q' else 'quickaccs'} to add an account", color=discord.Color.red())
+    else:
+        embed = discord.Embed(
+            title="Your Accounts" if type != "Q" else "Your Quick Accounts", color=discord.Color.dark_red())
+        for account in author_accs:
+            embed.add_field(
+                name=f"{account.username}#{account.tag}", value=account.note, inline=False)
+    return(embed)
+
+
 async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, operation: str, engine: engine.Engine, id=-1, ownerShip="Your"):  # Rewrite this
     # https://docs.pycord.dev/en/master/ext/pages/index.html <- good
+    """Displays a list of accounts to the user and allows them to select one to get the stats of"""
     if id == -1:
         id = ctx.author.id
-    with engine.connect() as conn:
-        accounts = select(ValoAccount).where(ValoAccount.owner ==
-                                             id).where(ValoAccount.acctype == operation)
 
-        page = 1
-        max_page_count = math.ceil(len(accounts)/5)
-        niceType = "quick" if operation == "Q" else "my"
+    await ctx.respond(f"1 second please...")
 
-        embed = discord.Embed(
-            title=f"{ownerShip} {niceType}accounts list", color=discord.Color.red(), description=None)
+    with Session(engine) as session:
+        accounts: "list[ValoAccount]" = session.query(
+            ValoAccount
+        ).filter(
+            ValoAccount.owner_id == id
+        ).filter(
+            ValoAccount.acctype == operation
+        ).all()
 
-        for i in range(5):
-            j = (page-1)*5 + i
-            if j < len(accounts):
-                embed.add_field(
-                    name=f"{j+1}) {accounts[j][2]}", value=accounts[j][1])
+    if not accounts:  # This is a little cursed
+        await ctx.edit(
+            content=None,
+            embed=discord.Embed(
+                title="ERROR",
+                description=f"You have not accounts to list. Use /{'myaccs' if operation != 'Q' else 'quickaccs'} to add an account",
+                color=discord.Color.red()
+            )
+        )
+        return
 
-        embed.set_footer(
-            text=f"Page {page} / {max_page_count} \n Razebot by MaximumMaxx")
-        await ctx.respond(embed=embed)
-        message = await ctx.interaction.original_message()
-        # getting the message object for editing and reacting
+    # Construct the region dictionary
+    region_dict = {}
+    for account in accounts:
+        region_dict[f"{account.username}#{account.tag}"] = account.region
 
-        await message.add_reaction("◀️")
-        await message.add_reaction("1️⃣")
-        await message.add_reaction("2️⃣")
-        await message.add_reaction("3️⃣")
-        await message.add_reaction("4️⃣")
-        await message.add_reaction("5️⃣")
-        await message.add_reaction("▶️")
-        number_reactions = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+    # Construct the select element
+    options = []
+    for account in accounts:
+        options.append(
+            discord.SelectOption(
+                label=f"{account.username}#{account.tag}",
+                value=f"{account.username}#{account.tag}",
+                description=account.note
+            )
+        )
 
-        def check(reaction, user):
-            return user == ctx.author
-            # This makes sure nobody except the command sender can interact with the "menu"
-
-        # Getting which account the user wants
-        try:
-            while True:
-                reaction, user = await bot.wait_for("reaction_add", timeout=60, check=check)
-                # waiting for a reaction to be added - times out after 60 seconds
-
-                if str(reaction.emoji) == "▶️" and page != max_page_count:
-                    page += 1
-                    embed = discord.Embed(
-                        title=f"{ownerShip} {list}accounts list", color=discord.Color.red(), description=None)
-                    embed.set_footer(
-                        text=f"Page {page} / {max_page_count} \n Razebot by MaximumMaxx")
-                    for i in range(5):
-                        j = page*5 + i
-                        if not j > len(accounts):
-                            embed.add_field(embed.add_field(
-                                name=f"{j+1}) {accounts[j][2]}", value=accounts[j][1]))
-                    await message.edit(embed=embed)
-                    await message.remove_reaction(reaction, user)
-
-                elif str(reaction.emoji) == "◀️" and page > 1:
-                    page -= 1
-                    embed = discord.Embed(
-                        title=f"{ownerShip} {list}accounts list", color=discord.Color.red(), description=None)
-                    embed.set_footer(
-                        text=f"Page {page} / {max_page_count} \n Razebot by MaximumMaxx")
-                    for i in range(5):
-                        j = page*5 + i
-                        if not j > len(accounts):
-                            embed.add_field(embed.add_field(
-                                name=f"{j+1}) {accounts[j][2]}", value=accounts[j][1]))
-                    await message.edit(embed=embed)
-                    await message.remove_reaction(reaction, user)
-
-                elif str(reaction.emoji) in number_reactions:
-                    account_index = page*5 + \
-                        number_reactions.index(str(reaction.emoji)) + 1
-                    number_reactions.index(str(reaction.emoji))
-                    if account_index - 5 > len(accounts):
-                        await message.remove_reaction(reaction, user)
-                    else:
-                        break
-
-                else:
-                    await message.remove_reaction(reaction, user)
-                    # removes reactions if the user tries to go forward on the last page or
-                    # backwards on the first page
-
-            # The -6 is really arbitary and honestly I have no idea why it's needed but it makes it work
-            await ctx.edit(content="Working on that ... please wait", embed=None)
-            return((get_acc(accounts[account_index-6]), message))
-
-        # If the user doens't respond withing 60 seconds
-        except asyncio.TimeoutError:
-            embed = discord.Embed(title=f"ERROR", color=discord.Color.red(
-            ), description="Your time to select an items has timed out. Please try again.")
-            embed.set_footer(text="Razebot by MaximumMaxx")
-            return(embed, message)
+    # Send the select menu
+    await ctx.edit(content=None, view=accountSelectorFactory(options=options, region=region_dict))
 
 
-def get_acc(account: str) -> discord.Embed:
+async def get_jstat(session, url, Jstats):
+    """
+    A little helper function for the http requests
+    """
+    async with session.get(url) as resp:
+        return Jstats(await resp.json(), resp.status)
+
+
+async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
     # Getting the actual account details
-    acc, tag = account[2].split("#")
-    region = account[3]
 
-    try:
-        accountReq = requests.get(
-            f"https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag}", headers={"user-agent": environ.get('uagentHeader')})
+    jsons = []
+    Jstats = namedtuple("Jstats", ["json", "status"])
+    start_time = time.time()
+    # Thank god for this article: https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
+    # This whole block is kinda weird but through some async magic it works and is significantly faster than requests
+    async with aiohttp.ClientSession() as session:
 
-        if accountReq.status_code == 403:
-            logging.info(f"Api is being rate limited")
-            embed = discord.Embed(title="ERROR", color=discord.Color.red(
-            ), description="The API is being rate limited. Please try again later.")
-            embed.set_footer(text="Razebot by MaximumMaxx")
-            return(embed)
+        tasks = []
+        for link in [
+            f"https://api.henrikdev.xyz/valorant/v1/account/{name}/{tag}",
+            f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{name}/{tag}?filter=competitive",
+            f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{name}/{tag}"
+        ]:
+            tasks.append(asyncio.ensure_future(
+                get_jstat(session, link, Jstats)))
 
-        if accountReq.status_code != 200:
-            logging.info(
-                f"Account not found: {acc}#{tag} Error code {accountReq.status_code}")
-            return(discord.Embed(title="ERROR", description=f"Account not found: {acc}#{tag}"))
+        jsons = await asyncio.gather(*tasks)
 
-        puuid = accountReq.json()["data"]['puuid']
-    except discord.ApplicationCommandInvokeError or KeyError as exception:
-        logging.exception(
-            f"Failed to retrieve account details with url: https://api.henrikdev.xyz/valorant/v1/account/{acc}/{tag} produces error: {exception}")
-        return(discord.Embed(title="ERROR", description="Account not found (something went really wrong)", color=discord.Color.red()))
+    accountReq, MH, MMR = jsons
 
-    mhRequest = f"https://api.henrikdev.xyz/valorant/v3/matches/{region}/{acc}/{tag}?filter=competitive"
-    MH = requests.get(mhRequest, headers={
-                      "user-agent": environ.get('uagentHeader')})
-    mmrRequest = f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{acc}/{tag}"
-    MMR = requests.get(mmrRequest, headers={
-                       "user-agent": environ.get('uagentHeader')})
+    puuid = accountReq.json["data"]["puuid"]
 
-    logging.info(
-        f"Made a request for {acc}#{tag} to \n{mhRequest}\n and \n{mmrRequest}\n got status code {MH.status_code} and {MMR.status_code}")
+    if accountReq.status == 403:
+        logging.debug(f"Api is being rate limited")
+        return(
+            discord.Embed(
+                title="ERROR",
+                color=discord.Color.red(),
+                description="The API is being rate limited. Please try again later."
+            ).set_footer(
+                text="Razebot by MaximumMaxx"
+            )
+        )
+
+    if accountReq.status != 200:
+        logging.debug(
+            f"Account not found: {name}#{tag} Error code {accountReq.status}"
+        )
+        return(
+            discord.Embed(
+                title="ERROR",
+                description=f"Account not found: {name}#{tag}"
+            ).set_footer(
+                text="Razebot by MaximumMaxx"
+            )
+        )
 
     kills = deaths = assists = score = mmr_change = "Unknown"
 
-    if MMR.status_code == 200:
-        MMR_json = MMR.json()
+    if MMR.status == 200:
+        MMR_json = MMR.json
         mmr_change = 0
         for game in MMR_json["data"]:
             mmr_change += game["mmr_change_to_last_game"]
+
         if len(MMR_json["data"]) == 0:
             return discord.Embed(title="ERROR", description="No data avaliable for that player. Double check your spelling and try again.", color=discord.Color.red())
+
         rank = MMR_json["data"][0]["currenttierpatched"]
         tiernum = MMR_json["data"][0]["currenttier"]
         elo = MMR_json["data"][0]["elo"]
-        image: str = compTiers().json(
-        )["data"][0]["tiers"][tiernum]["largeIcon"]
-        color = compTiers().json(
-        )["data"][0]["tiers"][tiernum]["color"][:6]
-        embed = discord.Embed(color=discord.Color.from_rgb(ImageColor.getcolor("#"+color, "RGB")[0], ImageColor.getcolor(
-            "#"+color, "RGB")[1], ImageColor.getcolor("#"+color, "RGB")[2]), description=f"The stats and rank for {acc}#{tag}", title=f"{acc}#{tag}")
+
+        logging.debug(f"{rank} {tiernum} {elo}")
+
+        image: str = compTiers()[tiernum]["largeIcon"]
+
+        color = compTiers()[tiernum]["color"][:6]
+
+        r, g, b = ImageColor.getcolor("#"+color, "RGB")
+        embed = discord.Embed(
+            color=discord.Color.from_rgb(r, g, b),
+            description=f"The stats and rank for {name}#{tag}", title=f"{name}#{tag}"
+        )
+
         embed.add_field(name="Rank", value=rank)
         embed.add_field(name="MMR", value=elo)
-    elif MMR.status_code == 204:
+
+    elif MMR.status == 204:
         return(discord.Embed(title="ERROR", description="Not enough recent data or wrong region", color=discord.Color.red()))
-    elif MMR.status_code == 429:
+
+    elif MMR.status == 429:
         return(discord.Embed(title="ERROR", description="The bot has been rate limited. Please try again in a few minutes", color=discord.Color.red()))
+
     else:
         logging.error(
-            f"{MMR.json()} error while retrieve data region: {region} username: {acc} tag: {tag}")
-        return(discord.Embed(title="ERROR", description="Something went horribly wrong and we are all going to die.", color=discord.Color.red()))
+            f"{MMR.json} error while retrieve data region: {region} username: {name} tag: {tag}"
+        )
+        return(
+            discord.Embed(
+                title="ERROR",
+                description="Something went horribly wrong and we are all going to die. If the error persits please message MaximumMaxx#0001",
+                color=discord.Color.red()
+            ).set_footer(
+                text="Razebot by MaximumMaxx"
+            )
+        )
 
-    if MH.status_code == 200:
-        MH_json = MH.json()
+    if MH.status == 200:
+        MH_json = MH.json
         match_count = len(MH_json["data"])
         kills, deaths, assists, score = 0, 0, 0, 0
 
@@ -249,7 +257,7 @@ def get_acc(account: str) -> discord.Embed:
         embed.add_field(
             name="ERROR", value="Error getting other stats. If the issue persists please contact me @ MaximumMaxx#0001")
         logging.error(
-            f"Failure retrieving Match History data: {MH.json()}")
+            f"Failure retrieving Match History data: {MH_json}")
     embed.set_image(url=image)
     embed.set_footer(text="Razebot by MaximumMaxx")
     return(embed)

@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord.commands import option
 from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
 from os import environ
 
 from lib.Helper import compTiers as ct, regionsChoice
@@ -22,22 +23,21 @@ class Rankcheck(commands.Cog):
 
     @rclist.command(name="myaccounts", description="Check an account that you own")
     async def mylist(self, ctx: discord.ApplicationContext):
-        embed, msg = await getAccFromList(
+        await getAccFromList(
             ctx=ctx,
             bot=self.bot,
             operation="M",
-            engine=engine)
-        await msg.edit(content=None, embed=embed)
+            engine=engine
+        )
 
     @rclist.command(name="quickaccounts", description="Check an account that you own")
     async def quicklist(self, ctx: discord.ApplicationContext):
-        returned = await getAccFromList(
+        await getAccFromList(
             ctx=ctx,
             bot=self.bot,
             operation="Q",
-            engine=engine)
-        embed, msg = returned
-        await msg.edit(content=None, embed=embed)
+            engine=engine
+        )
 
     @commands.slash_command(name="rankcheckaccount", description="Get the stats for a specific VALORANT account")
     async def rcacc(
@@ -47,27 +47,30 @@ class Rankcheck(commands.Cog):
 
         await ctx.respond("Working on that ... please wait")
         if type(region) is not str:
-            with engine.connect() as conn:
-                result = select(DisServer).where(DisServer.id == ctx.guild.id).where(
-                    DisServer.default_region == region)
+            with Session(engine) as session:
+                stmt = select(DisServer).where(DisServer.id == ctx.guild.id)
                 # Pull the region from the settings
-                region = result[0].default_region
+                region = session.schalars(stmt).one().default_region
 
         msg = await ctx.interaction.original_message()
-        await msg.edit(content=None, embed=get_acc((None, None, account, region)))
+        name, tag = account.split("#")
+        await msg.edit(content=None, embed=await get_acc(name, tag, region))
 
     @commands.slash_command(name="rankcheckuser", description="Get the stats of an account owned by a discord user")
     async def rcuser(self, ctx: discord.ApplicationContext, user: discord.User, region: str = option(name="Region", description=f"The region the account is in. If not specified will default to the server's default region.", choices=regionsChoice())):\
             # The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
 
         if type(region) is not str:
-            with engine.connect() as conn:
-                result = select(DisServer).where(DisServer.id == ctx.guild.id).where(
-                    DisServer.default_region == region)
-                # Pull the region from the settings
-                region = result[0].default_region
+            with Session(engine) as session:
 
-        returned = await getAccFromList(
+                # Pull the region from the settings
+                region = session.query(
+                    DisServer
+                ).filter(
+                    DisServer.server_id == str(ctx.guild.id)
+                ).one_or_none().region
+
+        await getAccFromList(
             ctx=ctx,
             bot=self.bot,
             operation="M",
@@ -75,8 +78,6 @@ class Rankcheck(commands.Cog):
             id=user.id,
             ownerShip=f"{user.name}'s"
         )
-        embed, msg = returned
-        await msg.edit(content=None, embed=embed)
 
 
 def setup(bot):
