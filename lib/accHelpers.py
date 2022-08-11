@@ -1,4 +1,3 @@
-from collections import namedtuple
 import asyncio
 import time
 
@@ -6,13 +5,15 @@ import discord
 from lib.Helper import AddAcc, RmAcc, compTiers
 from sqlalchemy import engine
 from sqlalchemy.orm import Session
-import requests
 import logging
 import aiohttp
 from PIL import ImageColor
 
 from lib.ormDefinitions import ValoAccount
 from bot.views.accountSelector import accountSelectorFactory
+from lib.globals import Jstats
+from lib.rchelpers import httpStatusCheck
+import lib.globals as globals
 
 
 async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
@@ -82,7 +83,7 @@ async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, 
     if id == -1:
         id = ctx.author.id
 
-    await ctx.respond(f"1 second please...")
+    await ctx.respond(f"1 second please... {globals.loadingEmoji}")
 
     with Session(engine) as session:
         accounts: "list[ValoAccount]" = session.query(
@@ -124,7 +125,7 @@ async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, 
     await ctx.edit(content=None, view=accountSelectorFactory(options=options, region=region_dict))
 
 
-async def get_jstat(session, url, Jstats):
+async def get_jstat(session, url):
     """
     A little helper function for the http requests
     """
@@ -136,12 +137,9 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
     # Getting the actual account details
 
     jsons = []
-    Jstats = namedtuple("Jstats", ["json", "status"])
-    start_time = time.time()
     # Thank god for this article: https://www.twilio.com/blog/asynchronous-http-requests-in-python-with-aiohttp
     # This whole block is kinda weird but through some async magic it works and is significantly faster than requests
     async with aiohttp.ClientSession() as session:
-
         tasks = []
         for link in [
             f"https://api.henrikdev.xyz/valorant/v1/account/{name}/{tag}",
@@ -157,30 +155,9 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
 
     puuid = accountReq.json["data"]["puuid"]
 
-    if accountReq.status == 403:
-        logging.debug(f"Api is being rate limited")
-        return(
-            discord.Embed(
-                title="ERROR",
-                color=discord.Color.red(),
-                description="The API is being rate limited. Please try again later."
-            ).set_footer(
-                text="Razebot by MaximumMaxx"
-            )
-        )
-
-    if accountReq.status != 200:
-        logging.debug(
-            f"Account not found: {name}#{tag} Error code {accountReq.status}"
-        )
-        return(
-            discord.Embed(
-                title="ERROR",
-                description=f"Account not found: {name}#{tag}"
-            ).set_footer(
-                text="Razebot by MaximumMaxx"
-            )
-        )
+    check = httpStatusCheck(accountReq)
+    if check is not None:
+        return check
 
     kills = deaths = assists = score = mmr_change = "Unknown"
 

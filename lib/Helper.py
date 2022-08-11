@@ -1,15 +1,17 @@
 import json
+import os
 
 from quart_discord import current_app
-import requests
 from sqlalchemy.orm import Session
 from sqlalchemy.engine.base import Engine
 from quart_discord import exceptions
 import functools
 import logging
 from discord.commands import OptionChoice
+from PIL import ImageFont
 
 from lib.ormDefinitions import *
+import lib.globals as globals
 
 
 def avaliableSettings():
@@ -23,6 +25,86 @@ def validRanks():
 def compTiers():
     with open("lib/valorant_ranks.json") as f:
         return json.load(f)
+
+
+def porpotionalAlign(text: str) -> str:
+    """
+    Takes in a string and returns a new string with spacing for alignment in in it
+
+    The string must be split by newlines, each word must be split by spaces, and each line must have the same number of words/sets of characters w/no spaces.
+
+    for example:
+    ```
+    Hello World\\n
+    Hi Mom
+    ```
+    would return:
+    ```
+    Hello World\\n
+    Hi    Mom
+    ```
+
+    Designed to work with non-monospaced fonts
+    """
+    text = text[1:]
+    font = ImageFont.truetype(globals.discord_font, 16)
+
+    # Define some whitespace characters
+    characters = [
+        " ",
+        " ",
+        " ",
+        " ",
+        " ",
+        "　",
+        " ",
+    ]
+
+    # Size and sort the characters
+    Whitespacesizes = [
+        (c, font.getlength(c))
+        for c in characters
+    ]
+
+    Whitespacesizes.sort(
+        key=lambda x: x[1]
+    )
+
+    # Turn the string into a list of words
+    lines = text.split("\n")
+    words: "list(list(str))" = [i.split(" ") for i in lines]
+
+    # Main loop
+    for index in range(len(words[0])):
+        # Get the longest word in the line
+
+        temp = []
+        for line in words:
+            temp.append(font.getlength(line[index]))
+
+        longestWord = max(temp)
+
+        for li in range(len(words)):
+            length = 0
+            while (font.getlength(words[li][index])) < longestWord:
+                length = font.getlength(words[li][index])
+                different = longestWord - length
+
+                if different < Whitespacesizes[0][1]:
+                    print(f"{words[li][index]} is complete")
+                    break
+
+                biggest_whitespace = ""
+                for whitespace in Whitespacesizes:
+                    if whitespace[1] > different:
+                        break
+                    biggest_whitespace = whitespace[0]
+
+                words[li][index] += biggest_whitespace
+
+    # Turn the list back into a string
+    newString = "\n".join([" ".join(i) for i in words])
+    return newString
 
 
 def helpMenus():
