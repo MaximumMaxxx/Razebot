@@ -256,30 +256,30 @@
         "tierName": "ASCENDANT 1",
         "division": "ECompetitiveDivision::ASCENDANT",
         "divisionName": "ASCENDANT",
-        "color": "#6ACA9A",
-        "backgroundColor": "#1D7345",
-        "smallIcon": "https://static.wikia.nocookie.net/valorant/images/e/e5/Ascendant_1_Rank.png/",
-        "largeIcon": "https://static.wikia.nocookie.net/valorant/images/e/e5/Ascendant_1_Rank.png/"
+        "color": "6ACA9A",
+        "backgroundColor": "1D7345",
+        "smallIcon": "https://static.wikia.nocookie.net/valorant/images/e/e5/Ascendant_1_Rank.png/revision/latest/",
+        "largeIcon": "https://static.wikia.nocookie.net/valorant/images/e/e5/Ascendant_1_Rank.png/revision/latest/"
     },
     {
         "tier": 22,
         "tierName": "ASCENDANT 2",
         "division": "ECompetitiveDivision::ASCENDANT",
         "divisionName": "ASCENDANT",
-        "color": "#6ACA9A",
-        "backgroundColor": "#1D7345",
-        "smallIcon": "https://static.wikia.nocookie.net/valorant/images/1/1e/Ascendant_2_Rank.png/",
-        "largeIcon": "https://static.wikia.nocookie.net/valorant/images/1/1e/Ascendant_2_Rank.png/"
+        "color": "6ACA9A",
+        "backgroundColor": "1D7345",
+        "smallIcon": "https://static.wikia.nocookie.net/valorant/images/1/1e/Ascendant_2_Rank.png/revision/latest/",
+        "largeIcon": "https://static.wikia.nocookie.net/valorant/images/1/1e/Ascendant_2_Rank.png/revision/latest/"
     },
     {
         "tier": 23,
         "tierName": "ASCENDANT 3",
         "division": "ECompetitiveDivision::ASCENDANT",
         "divisionName": "ASCENDANT",
-        "color": "#6ACA9A",
-        "backgroundColor": "#1D7345",
-        "smallIcon": "https://static.wikia.nocookie.net/valorant/images/e/e5/Ascendant_3_Rank.png/",
-        "largeIcon": "https://static.wikia.nocookie.net/valorant/images/e/e5/Ascendant_3_Rank.png/"
+        "color": "6ACA9A",
+        "backgroundColor": "1D7345",
+        "smallIcon": "https://static.wikia.nocookie.net/valorant/images/5/53/Ascendant_3_Rank.png/revision/latest/",
+        "largeIcon": "https://static.wikia.nocookie.net/valorant/images/5/53/Ascendant_3_Rank.png/revision/latest/"
     },
     {
         "tier": 24,
