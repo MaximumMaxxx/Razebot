@@ -1,19 +1,15 @@
 from os import environ
-import os
 
 from discord.ext import commands
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 import discord
-import aiohttp
-from lib import rchelpers
+from .views.accountSelector import accountSelectorFactory
 
-from lib.Helper import compTiers as ct, porpotionalAlign
+from lib.Helper import compTiers as ct
 from lib.accHelpers import getAccFromList, get_acc
-from lib.globals import Jstats
 from lib.ormDefinitions import *
-from lib.rchelpers import regionAutoComplete
-import lib.globals as globals
+from lib.rchelpers import regionAutoComplete, past10
 
 engine = create_engine(
     environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
@@ -34,7 +30,6 @@ class Rankcheck(commands.Cog):
     ):
         await getAccFromList(
             ctx=ctx,
-            bot=self.bot,
             operation="M",
             engine=engine
         )
@@ -46,7 +41,6 @@ class Rankcheck(commands.Cog):
     ):
         await getAccFromList(
             ctx=ctx,
-            bot=self.bot,
             operation="Q",
             engine=engine
         )
@@ -77,7 +71,9 @@ class Rankcheck(commands.Cog):
                 region = session.schalars(stmt).one().default_region
 
         msg = await ctx.interaction.original_message()
+
         name, tag = account.split("#")
+
         await msg.edit(content=None, embed=await get_acc(name, tag, region))
 
     @commands.slash_command(name="rankcheckuser", description="Get the stats of an account owned by a discord user")
@@ -107,89 +103,50 @@ class Rankcheck(commands.Cog):
 
         await getAccFromList(
             ctx=ctx,
-            bot=self.bot,
             operation="M",
             engine=engine,
             id=user.id,
-            ownerShip=f"{user.name}'s"
         )
 
-    @commands.slash_command(name="past10", description="Get the stats of the last 5 matches for a specific VALORANT account")
-    async def past10(
+    @commands.slash_command(name="quickpast5", description="Get the stats of the last 5 matches for an account from your my accounts list")
+    async def qpast10(
             self,
             ctx: discord.ApplicationContext,
-            account: discord.Option(
-                str,
-                name="account",
-                description="The account#tag that you want to see",
-                required=True
-            ),
-            region: discord.Option(
-                str,
-                name="region",
-                description="The region that you want to check the account in; Defaults to the server's default region.",
-                autocomplete=regionAutoComplete,
-                requied=False
-            )
     ):
-        name, tag = account.split("#")
+        with Session(engine) as session:
+            # Pull the region from the settings
+            region = session.query(
+                DisServer
+            ).filter(
+                DisServer.server_id == str(ctx.guild.id)
+            ).one_or_none().region
 
-        if type(region) is None:
-            with Session(engine) as session:
-                session.query(
-                    DisServer
-                ).where(
-                    DisServer.server_id == str(ctx.guild.id)
-                ).one_or_none().region
-
-        await ctx.respond(f"Working on that ... {globals.loadingEmoji}")
-
-        matches = None
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{name}/{tag}") as r:
-                matches = Jstats(await r.json(), r.status)
-
-        check = rchelpers.httpStatusCheck(matches)
-        if check is not None:
-            await ctx.respond(check)
-            return
-
-        tier = matches.json["data"][0]["currenttier"]
-
-        matchesString = ""  # "```"
-        for match in matches.json["data"]:
-            emoji = ""
-
-            if match["mmr_change_to_last_game"] > 0:
-                emoji = globals.uparrow
-
-            elif match["mmr_change_to_last_game"] < 0:
-                emoji = globals.downarrow
-            else:
-                emoji = globals.equalarrow
-
-            elomod = match['elo'] % 100
-
-            nextRankSection = ""
-            if match["currenttierpatched"] != "Radiant":  # You can't rank up past radiant
-                nextRankSection = f"- {str(elomod).rjust(2, ' ')}/100"
-
-            matchesString += f"\n{match['currenttierpatched']} {nextRankSection} - {emoji} {'+' if match['mmr_change_to_last_game'] >= 0 else ''}{match['mmr_change_to_last_game']} - {match['elo']}"
-        # matchesString += "```"
-
-        matchesString = porpotionalAlign(matchesString)
-
-        embed = discord.Embed(
-            title=f"{name}#{tag}",
-            description=matchesString
-        ).add_field(
-            name=matches.json["data"][0]["currenttierpatched"],
-            value=matches.json["data"][0]["elo"]
+        await getAccFromList(
+            ctx=ctx,
+            operation="Q",
+            engine=engine,
+            callback=past10,
         )
 
-        embed.set_thumbnail(url=ct()[tier]["largeIcon"])
+    @commands.slash_command(name="mypast5", description="Get the stats of the last 5 matches for an account from your quick accounts list")
+    async def mpast10(
+            self,
+            ctx
+    ):
+        with Session(engine) as session:
+            # Pull the region from the settings
+            region = session.query(
+                DisServer
+            ).filter(
+                DisServer.server_id == str(ctx.guild.id)
+            ).one_or_none().region
 
-        await ctx.edit(content=None, embed=embed)
+        await getAccFromList(
+            ctx=ctx,
+            operation="M",
+            engine=engine,
+            callback=past10,
+        )
 
 
 def setup(bot):

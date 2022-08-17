@@ -77,62 +77,6 @@ async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.
     return(embed)
 
 
-async def getAccFromList(ctx: discord.ApplicationContext, bot: discord.bot.Bot, operation: str, engine: engine.Engine, id=-1, ownerShip="Your"):  # Rewrite this
-    # https://docs.pycord.dev/en/master/ext/pages/index.html <- good
-    """Displays a list of accounts to the user and allows them to select one to get the stats of"""
-    if id == -1:
-        id = ctx.author.id
-
-    await ctx.respond(f"1 second please... {globals.loadingEmoji}")
-
-    with Session(engine) as session:
-        accounts: "list[ValoAccount]" = session.query(
-            ValoAccount
-        ).filter(
-            ValoAccount.owner_id == id
-        ).filter(
-            ValoAccount.acctype == operation
-        ).all()
-
-    if not accounts:  # This is a little cursed
-        await ctx.edit(
-            content=None,
-            embed=discord.Embed(
-                title="ERROR",
-                description=f"You have not accounts to list. Use /{'myaccs' if operation != 'Q' else 'quickaccs'} to add an account",
-                color=discord.Color.red()
-            )
-        )
-        return
-
-    # Construct the region dictionary
-    region_dict = {}
-    for account in accounts:
-        region_dict[f"{account.username}#{account.tag}"] = account.region
-
-    # Construct the select element
-    options = []
-    for account in accounts:
-        options.append(
-            discord.SelectOption(
-                label=f"{account.username}#{account.tag}",
-                value=f"{account.username}#{account.tag}",
-                description=account.note
-            )
-        )
-
-    # Send the select menu
-    await ctx.edit(content=None, view=accountSelectorFactory(options=options, region=region_dict))
-
-
-async def get_jstat(session, url):
-    """
-    A little helper function for the http requests
-    """
-    async with session.get(url) as resp:
-        return Jstats(await resp.json(), resp.status)
-
-
 async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
     # Getting the actual account details
 
@@ -147,7 +91,7 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
             f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{name}/{tag}"
         ]:
             tasks.append(asyncio.ensure_future(
-                get_jstat(session, link, Jstats)))
+                get_jstat(session, link)))
 
         jsons = await asyncio.gather(*tasks)
 
@@ -238,3 +182,59 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
     embed.set_image(url=image)
     embed.set_footer(text="Razebot by MaximumMaxx")
     return(embed)
+
+
+async def getAccFromList(ctx: discord.ApplicationContext, operation: str, engine: engine.Engine, callback: "callable" = get_acc, id=-1):
+    # https://docs.pycord.dev/en/master/ext/pages/index.html <- good
+    """Displays a list of accounts to the user and allows them to select one to get the stats of"""
+    if id == -1:
+        id = ctx.author.id
+
+    await ctx.respond(f"1 second please... {globals.loadingEmoji}")
+
+    with Session(engine) as session:
+        accounts: "list[ValoAccount]" = session.query(
+            ValoAccount
+        ).filter(
+            ValoAccount.owner_id == id
+        ).filter(
+            ValoAccount.acctype == operation
+        ).all()
+
+    if not accounts:  # This is a little cursed
+        await ctx.edit(
+            content=None,
+            embed=discord.Embed(
+                title="ERROR",
+                description=f"You have not accounts to list. Use /{'myaccs' if operation != 'Q' else 'quickaccs'} to add an account",
+                color=discord.Color.red()
+            )
+        )
+        return
+
+    # Construct the region dictionary
+    region_dict = {}
+    for account in accounts:
+        region_dict[f"{account.username}#{account.tag}"] = account.region
+
+    # Construct the select element
+    options = []
+    for account in accounts:
+        options.append(
+            discord.SelectOption(
+                label=f"{account.username}#{account.tag}",
+                value=f"{account.username}#{account.tag}",
+                description=account.note
+            )
+        )
+
+    # Send the select menu
+    await ctx.edit(content=None, view=accountSelectorFactory(options=options, region=region_dict, callback=callback))
+
+
+async def get_jstat(session, url):
+    """
+    A little helper function for the http requests
+    """
+    async with session.get(url) as resp:
+        return Jstats(await resp.json(), resp.status)
