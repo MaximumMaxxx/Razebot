@@ -1,35 +1,31 @@
 # Code slightly stolen from here: https://replit.com/@cooljames1610/economybot I still modified it a bunch but the bot to app communication is not me
 from os import environ
 import logging
+from sys import stderr
 
 import discord
 from discord.ext import commands
 from quart import Quart, redirect, url_for, render_template, request
 from quart.helpers import make_response
 from quart_discord import DiscordOAuth2Session, RateLimited, requires_authorization, Unauthorized, AccessDenied
-import requests
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from quart_csrf import CSRFProtect
 
 from lib.ormDefinitions import Base, DisServer
 from lib.Helper import requiresAdmin, validRanks, parseDashboardChoices
-from blueprints.api import blueprint
+from blueprints.api import blueprint as api_blueprint
 
 logging.basicConfig(level=logging.INFO, filename="Logs.log")
 app = Quart(__name__)
 # Load in the pages
-app.register_blueprint(blueprint, url_prefix="/api")
+app.register_blueprint(api_blueprint, url_prefix="/api")
 
 CSRFProtect(app)  # Wacky stuff to make the site more secure
 
 engine = create_engine(
     environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
 Base.metadata.create_all(engine)
-
-
-# Generates a list of the currently avaliable tiers. Should be up to date with any rank name changes as long as the api keeps up to date
-valid_ranks = validRanks()
 
 
 app.secret_key = environ.get('websecretkey')
@@ -145,7 +141,9 @@ async def support():
     return await render_template("imagine.html", route="Support page")
 
 bot = commands.Bot(command_prefix=">",
-                   description="Razebot, the ultimate discord bot for VALORANT", help_command=None)
+                   description="Razebot, the ultimate discord bot for VALORANT",
+                   help_command=None
+                   )
 
 
 @bot.event
@@ -174,8 +172,7 @@ def run():  # Credit to Muffin's Dev#6537 for some of this code
         try:
             bot.load_extension(extension)
         except Exception as error:
-            print('{} failed to load [{}]'.format(
-                extension, error))
+            stderr.write(f'{extension} failed to load [{error}]')
             logging.error(
                 f"{extension} failed to load [{error}]")
     bot.run(environ.get('bottoken'))
