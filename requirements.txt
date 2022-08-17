@@ -1,9 +1,16 @@
-Pillow
-requests
-SQLAlchemy
-quart
-git+https://github.com/MaximumMaxxx/Cordless-Quart-Discord
-pycord
-Quart-Csrf
-pymysql
 python-dotenv
+Pillow
+
+SQLAlchemy
+pymysql
+
+git+https://github.com/MaximumMaxxx/Cordless-Quart-Discord 
+py-cord==2.0.1
+aiodns
+cchardet
+brotlipy
+orjson
+
+Werkzeug==2.0.0 # Fix quart-csfr
+quart==0.17.0
+Quart-Csrf
