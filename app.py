@@ -13,16 +13,6 @@ logging.basicConfig(level=logging.INFO, filename="Logs.log")
 app.register_blueprint(api_blueprint, url_prefix="/api")
 app.register_blueprint(web_blueprint, url_prefix="/")
 
-# Load in a bunch of config stuff
-app.secret_key = environ.get('websecretkey')
-app.config["DISCORD_CLIENT_ID"] = environ.get('dscclientid')
-app.config["DISCORD_CLIENT_SECRET"] = environ.get('dscclientsecret')
-app.config["DISCORD_REDIRECT_URI"] = environ.get('dscredirecturi')
-app.config["DISCORD_BOT_TOKEN"] = environ.get('bottoken')
-
-# Remove this when going into production
-environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
-
 
 Globalextensions = [
     "bot.accManagement",
@@ -33,13 +23,13 @@ Globalextensions = [
 
 
 def run():  # Credit to Muffin's Dev#6537 for some of this code
-    bot.loop.create_task(
-        app.run_task(
-            host=environ.get('webhost'),
-            port=environ.get('webport'),
-            debug=True
-        )
-    )
+    # bot.loop.create_task(
+    #    app.run_task(
+    #        host=environ.get('webhost'),
+    #        port=environ.get('webport'),
+    #        debug=True
+    #    )
+    # )
 
     # Load in all the extensions
     for extension in Globalextensions:
@@ -52,6 +42,7 @@ def run():  # Credit to Muffin's Dev#6537 for some of this code
             logging.error(
                 f"{extension} failed to load [{error}]"
             )
+
     bot.run(
         environ.get('bottoken')
     )

@@ -1,5 +1,5 @@
 import json
-import os
+from multiprocessing.spawn import import_main_path
 
 from quart_discord import current_app
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from discord.commands import OptionChoice
 from PIL import ImageFont
 
 from lib.ormDefinitions import *
+from lib.globals import Jstats
 
 
 def avaliableSettings():
@@ -251,3 +252,11 @@ def settingChoices():
 
 def helpmenuChoice():
     return [OptionChoice(name=i, value=i) for i in helpMenus()]
+
+
+async def get_jstat(session, url):
+    """
+    A little helper function for the http requests
+    """
+    async with session.get(url) as resp:
+        return Jstats(await resp.json(), resp.status)

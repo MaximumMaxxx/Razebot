@@ -1,4 +1,3 @@
-from http import server
 from os import environ
 
 import discord

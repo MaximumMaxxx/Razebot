@@ -1,14 +1,12 @@
-from .globals import validRegions, Jstats
 from typing import Union
 
 from sqlalchemy.orm import Session
 import discord
+import aiohttp
 
 from lib.ormDefinitions import DisServer
-import aiohttp
-import lib.rchelpers as rchelpers
 from lib.Helper import porpotionalAlign, compTiers
-from lib.globals import engine
+from lib.globals import engine, validRegions, Jstats
 
 
 def regionAutoComplete(ctx: discord.AutocompleteContext):
@@ -60,7 +58,7 @@ async def past10(ctx, account, region):
         async with session.get(f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{name}/{tag}") as r:
             matches = Jstats(await r.json(), r.status)
 
-    check = rchelpers.httpStatusCheck(matches)
+    check = httpStatusCheck(matches)
     if check is not None:
         await ctx.respond(check)
         return

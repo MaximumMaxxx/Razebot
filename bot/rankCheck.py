@@ -1,10 +1,9 @@
 from os import environ
 
 from discord.ext import commands
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 import discord
-from .views.accountSelector import accountSelectorFactory
 
 from lib.globals import engine
 from lib.Helper import compTiers as ct

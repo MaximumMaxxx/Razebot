@@ -1,4 +1,3 @@
-import imp
 from os import environ
 
 import discord

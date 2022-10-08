@@ -1,8 +1,9 @@
 # Just define some global variables to be used across files
 from collections import namedtuple
-import imp
 import os
+from dotenv import load_dotenv
 
+import discord
 from quart import Quart
 from quart_discord import DiscordOAuth2Session
 from quart_csrf import CSRFProtect
@@ -27,15 +28,29 @@ equalarrow = "<:literallydying:941523511598514186>"
 discord_font = f"{os.getcwd()}/lib/whitneybook.otf"
 font_end_padding = "  "
 
+load_dotenv()
+
 # Setup variables for auth, these should be shared across all files that import this file
 app = Quart(__name__)
 CSRFProtect(app)  # Wacky stuff to make the site more secure
+
+# Load in a bunch of config stuff
+app.secret_key = os.environ.get('websecretkey')
+app.config["DISCORD_CLIENT_ID"] = os.environ.get('dscclientid')
+app.config["DISCORD_CLIENT_SECRET"] = os.environ.get('dscclientsecret')
+app.config["DISCORD_REDIRECT_URI"] = os.environ.get('dscredirecturi')
+app.config["DISCORD_BOT_TOKEN"] = os.environ.get('bottoken')
+
+# Remove this when going into production
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true"
+
 discordd = DiscordOAuth2Session(app)
 
 bot = commands.Bot(
     command_prefix=">",
     description="Razebot, the ultimate discord bot for VALORANT",
-    help_command=None
+    help_command=None,
+    intents=discord.Intents.default()
 )
 
 engine = create_engine(

@@ -1,8 +1,8 @@
 import discord
-import lib.accHelpers as accHelpers
+from lib.get_accs import get_acc
 
 
-def accountSelectorFactory(options: "list[discord.SelectOption]", region: "dict[str, str]", callback: "callable" = accHelpers.get_acc):
+def accountSelectorFactory(options: "list[discord.SelectOption]", region: "dict[str, str]", callback: "callable" = get_acc):
     """
     Returns an account selector that lets you select an account from a list of accounts
 
@@ -25,7 +25,7 @@ def accountSelectorFactory(options: "list[discord.SelectOption]", region: "dict[
         async def select_callback(self, select, interation):
             name, tag = select.values[0].split("#")
             await interation.response.edit_message(
-                embed=await accHelpers.get_acc(
+                embed=await get_acc(
                     name,
                     tag,
                     self.regions[f"{name}#{tag}"]
