@@ -13,14 +13,13 @@ from lib.ormDefinitions import ValoAccount
 from bot.views.accountSelector import accountSelectorFactory
 from lib.globals import Jstats
 from lib.rchelpers import httpStatusCheck
-import lib.globals as globals
 
 
 async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
     try:
         account, tag = account.split("#") if account != None else None
     except ValueError:
-        return(discord.Embed(title="ERROR", description="Your account is missing a tag", color=discord.Color.red()))
+        return (discord.Embed(title="ERROR", description="Your account is missing a tag", color=discord.Color.red()))
     if region != None:
         if account != None:
             if note == None:
@@ -28,20 +27,20 @@ async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.E
             returned = AddAcc(
                 engine, ctx.author.id, type, f"{account}#{tag}", note, region)
             if returned == "duplicate":
-                return(discord.Embed(
+                return (discord.Embed(
                     title="ERROR", description="That account has already been saved by you", color=discord.Color.red()))
             elif returned == "maxed":
-                return(discord.Embed(title="ERROR", description="Listen man, you have 25 accounts saved. Sorry but this is an intervention. Please reconsider your life choices leading up to here.",  color=discord.Color.red()))
+                return (discord.Embed(title="ERROR", description="Listen man, you have 25 accounts saved. Sorry but this is an intervention. Please reconsider your life choices leading up to here.",  color=discord.Color.red()))
             elif returned == "success":
-                return(discord.Embed(
+                return (discord.Embed(
                     title="Success", description="Your account has successfully been added to the database", color=discord.Color.green()))
 
         else:
-            return(discord.Embed(
+            return (discord.Embed(
                 title="Error", description="Please specify a VALORANT account", color=discord.Color.red()))
 
     else:
-        return(discord.Embed(
+        return (discord.Embed(
             title="Error", description="Please specify a region", color=discord.Color.red()))
 
 
@@ -49,14 +48,14 @@ async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engin
     try:
         account, tag = account.split("#") if account != None else None
     except ValueError:
-        return(discord.Embed(title="ERROR", description="Your account is missing a tag", color=discord.Color.red()))
+        return (discord.Embed(title="ERROR", description="Your account is missing a tag", color=discord.Color.red()))
     returned = RmAcc(engine, ctx.author.id,
                      type, f"{account}#{tag}")
     if returned == "sucess":
-        return(discord.Embed(
+        return (discord.Embed(
             title="Sucess", description="You account has successfully been removed from the database", color=discord.Color.green()))
     elif returned == "NIDB":
-        return(discord.Embed(
+        return (discord.Embed(
             title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red()))
 
 
@@ -74,7 +73,7 @@ async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.
         for account in author_accs:
             embed.add_field(
                 name=f"{account.username}#{account.tag}", value=account.note, inline=False)
-    return(embed)
+    return (embed)
 
 
 async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
@@ -134,16 +133,16 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
         embed.add_field(name="MMR", value=elo)
 
     elif MMR.status == 204:
-        return(discord.Embed(title="ERROR", description="Not enough recent data or wrong region", color=discord.Color.red()))
+        return (discord.Embed(title="ERROR", description="Not enough recent data or wrong region", color=discord.Color.red()))
 
     elif MMR.status == 429:
-        return(discord.Embed(title="ERROR", description="The bot has been rate limited. Please try again in a few minutes", color=discord.Color.red()))
+        return (discord.Embed(title="ERROR", description="The bot has been rate limited. Please try again in a few minutes", color=discord.Color.red()))
 
     else:
         logging.error(
             f"{MMR.json} error while retrieve data region: {region} username: {name} tag: {tag}"
         )
-        return(
+        return (
             discord.Embed(
                 title="ERROR",
                 description="Something went horribly wrong and we are all going to die. If the error persits please message MaximumMaxx#0001",
@@ -181,7 +180,7 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
             f"Failure retrieving Match History data: {MH_json}")
     embed.set_image(url=image)
     embed.set_footer(text="Razebot by MaximumMaxx")
-    return(embed)
+    return (embed)
 
 
 async def getAccFromList(ctx: discord.ApplicationContext, operation: str, engine: engine.Engine, callback: "callable" = get_acc, id=-1):

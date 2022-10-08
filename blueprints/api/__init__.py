@@ -5,6 +5,8 @@ from sqlalchemy import create_engine, text
 from quart_discord import requires_authorization
 from dotenv import load_dotenv
 
+from lib.globals import engine
+
 blueprint = Blueprint("api", __name__)
 
 load_dotenv()

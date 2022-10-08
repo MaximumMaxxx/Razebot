@@ -11,15 +11,14 @@ from discord.commands import OptionChoice
 from PIL import ImageFont
 
 from lib.ormDefinitions import *
-import lib.globals as globals
 
 
 def avaliableSettings():
-    return(["region", "prefix"])
+    return (["region", "prefix"])
 
 
 def validRanks():
-    return(["iron", "bronze", "silver", "gold", "platinum", "diamond", "immortal", "radiant", "none"])
+    return (["iron", "bronze", "silver", "gold", "platinum", "diamond", "immortal", "radiant", "none"])
 
 
 def compTiers():
@@ -108,7 +107,7 @@ def porpotionalAlign(text: str) -> str:
 
 
 def helpMenus():
-    return(
+    return (
         {
             "rc": ["https://static.wikia.nocookie.net/valorant/images/2/24/TX_CompetitiveTier_Large_24.png", "Rank Check", f"Allows you to check the rank of any player. Usage: the base command is '>rc'. If no account is specified it will pull from your quick accounts list. If you ping someone, it will pull from their accounts list. If you put a username like 'rc name#tag' it will check that player's rank. Finally you can add a region like 'na' if the person is in a different region than the server owner has set."],
             "quickaccs": ["https://upload.wikimedia.org/wikipedia/commons/a/a8/Lightning_bolt_simple.png", "Quick Accounts", f"A command to interact with a database of saved quick accounts. Quick accounts are used to check the ranks of certain people or accounts without having to memorize their tags. Syntax: All uses start with >quickaccs followed by something. To view a list of your saved accounts use '>quickaccs'. To add an account use '>quickaccs add Name#tag note' If the name or note has spaces you don't have to do anything special. To remove an account use '>quickaccs del Name#tag' Again nothing special has to happen if the name has spaces"],
@@ -122,7 +121,7 @@ def helpMenus():
 
 
 def avaliableHelpMenus():
-    return(
+    return (
         ["rc", "quickaccs", "myaccs",
          "updaterole", "quick vs myaccs", "settings", "setroles"]
     )
@@ -140,7 +139,7 @@ def AddAcc(engine: Engine, user_id: int, type, ign, note, region):
         ).one_or_none()
 
         if result is not None:
-            return("duplicate")
+            return ("duplicate")
 
         result = session.query(
             ValoAccount
@@ -151,7 +150,7 @@ def AddAcc(engine: Engine, user_id: int, type, ign, note, region):
         ).all()
 
         if len(result) >= 25 and type == "M":
-            return("maxed")
+            return ("maxed")
         else:
             # Name is not in the database
             name, tag = ign.split("#")
@@ -166,7 +165,7 @@ def AddAcc(engine: Engine, user_id: int, type, ign, note, region):
 
             session.add(valoAcc)
             session.commit()
-            return("success")
+            return ("success")
 
 
 def RmAcc(engine: Engine, user, type, ign):
@@ -186,12 +185,12 @@ def RmAcc(engine: Engine, user, type, ign):
         ).one_or_none()
 
     if result is None:
-        return("NIDB")
+        return ("NIDB")
 
     session.delete(result)
     session.commit()
 
-    return("sucess")
+    return ("sucess")
 
 
 def requiresAdmin(view):

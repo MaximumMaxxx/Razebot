@@ -1,8 +1,6 @@
 from .globals import validRegions, Jstats
 from typing import Union
-from os import environ
 
-from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 import discord
 
@@ -10,9 +8,7 @@ from lib.ormDefinitions import DisServer
 import aiohttp
 import lib.rchelpers as rchelpers
 from lib.Helper import porpotionalAlign, compTiers
-
-engine = create_engine(
-    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
+from lib.globals import engine
 
 
 def regionAutoComplete(ctx: discord.AutocompleteContext):

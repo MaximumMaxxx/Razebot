@@ -4,13 +4,9 @@ from os import environ
 import discord
 from discord import commands
 from discord.ext import commands
-from sqlalchemy import create_engine,  select
 from sqlalchemy.orm import Session
 from lib.ormDefinitions import DisServer, Role
-
-
-engine = create_engine(
-    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
+from lib.globals import engine
 
 
 class Listeners(commands.Cog):
@@ -80,6 +76,17 @@ class Listeners(commands.Cog):
 
         # This line makes your other commands work.
         await self.bot.process_commands(message)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.bot.sync_commands(guild_ids=[898725831164178442], force=True)
+        print('--------------------------------------')
+        print('Bot is ready.')
+        print('Razebot by MaximumMaxx')
+        print(self.bot.user.name)
+        print(self.bot.user.id)
+        print('--------------------------------------')
+        await self.bot.change_presence(activity=discord.Game(environ.get("playing_note")))
 
 
 def setup(bot):

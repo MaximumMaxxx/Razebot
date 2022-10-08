@@ -6,13 +6,11 @@ from sqlalchemy.orm import Session
 import discord
 from .views.accountSelector import accountSelectorFactory
 
+from lib.globals import engine
 from lib.Helper import compTiers as ct
 from lib.accHelpers import getAccFromList, get_acc
 from lib.ormDefinitions import *
 from lib.rchelpers import regionAutoComplete, past10
-
-engine = create_engine(
-    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
 
 
 class Rankcheck(commands.Cog):

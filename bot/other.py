@@ -10,10 +10,7 @@ import requests
 
 from lib.Helper import avaliableSettings, validRanks,  helpMenus, avaliableSettings
 from lib.ormDefinitions import *
-
-
-engine = create_engine(
-    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
+from lib.globals import engine
 
 
 class Other(commands.Cog):

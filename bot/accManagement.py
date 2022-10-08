@@ -1,17 +1,15 @@
+import imp
 from os import environ
 
 import discord
 from discord.ext import commands
-from sqlalchemy import create_engine, select
+from sqlalchemy import select
 import requests
 
 from lib.Helper import validRanks
 from lib.accHelpers import addHelper, removeHelper, listHelper
 from lib.ormDefinitions import *
-
-
-engine = create_engine(
-    environ.get('dburl'), echo=bool(environ.get('echo')), future=bool(environ.get('future')))
+from lib.globals import engine
 
 
 class accManagement(commands.Cog):
