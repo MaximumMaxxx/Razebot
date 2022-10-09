@@ -78,7 +78,6 @@ class Listeners(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.sync_commands(guild_ids=[898725831164178442], force=True)
         print('--------------------------------------')
         print('Bot is ready.')
         print('Razebot by MaximumMaxx')
