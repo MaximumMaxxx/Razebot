@@ -59,8 +59,13 @@ async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engin
 
 async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine):
     with Session(engine) as session:
-        author_accs: "list[ValoAccount]" = session.query(ValoAccount).filter(
-            ValoAccount.owner_id == ctx.author.id).filter(ValoAccount.acctype == type).all()
+        author_accs: "list[ValoAccount]" = session.query(
+            ValoAccount
+        ).filter(
+            ValoAccount.owner_id == ctx.author.id
+        ).filter(
+            ValoAccount.acctype == type
+        ).all()
 
     if not author_accs:
         embed = discord.Embed(
