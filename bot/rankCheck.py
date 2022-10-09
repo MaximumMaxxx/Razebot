@@ -10,7 +10,7 @@ from lib.Helper import compTiers as ct
 from lib.accHelpers import getAccFromList, get_acc
 from lib.ormDefinitions import *
 from lib.rchelpers import past10
-from lib.autoCompletes import RegionAcOption
+from lib.autoCompletes import RegionAcOption, AccountOptions
 
 
 class Rankcheck(commands.Cog):
@@ -46,11 +46,7 @@ class Rankcheck(commands.Cog):
     @commands.slash_command(name="rankcheckaccount", description="Get the stats for a specific VALORANT account")
     async def rcacc(
             self, ctx: discord.ApplicationContext,
-            account:  discord.Option(
-                str,
-                name="account",
-                description="The VALORANT account you would like to check the rank of"
-            ),
+            account:  AccountOptions,
             region: RegionAcOption
     ):
         # The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
@@ -100,14 +96,6 @@ class Rankcheck(commands.Cog):
             self,
             ctx: discord.ApplicationContext,
     ):
-        with Session(engine) as session:
-            # Pull the region from the settings
-            region = session.query(
-                DisServer
-            ).filter(
-                DisServer.server_id == str(ctx.guild.id)
-            ).one_or_none().region
-
         await getAccFromList(
             ctx=ctx,
             operation="Q",
@@ -120,14 +108,6 @@ class Rankcheck(commands.Cog):
             self,
             ctx
     ):
-        with Session(engine) as session:
-            # Pull the region from the settings
-            region = session.query(
-                DisServer
-            ).filter(
-                DisServer.server_id == str(ctx.guild.id)
-            ).one_or_none().region
-
         await getAccFromList(
             ctx=ctx,
             operation="M",

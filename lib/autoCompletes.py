@@ -101,6 +101,7 @@ RegionAcOption = discord.Option(
     str,
     name="region",
     description=f"The region the account is in. If not specified will default to the server's default region.",
+    required=False,
     autocomplete=regionAutoComplete
 )
 
@@ -108,5 +109,34 @@ MyAccountAcOption = discord.Option(
     str,
     name="account",
     description=f"The account you want to operate on.",
+    required=True,
     autocomplete=myAccountAutoComplete
+)
+
+QuickAccountAcOption = discord.Option(
+    str,
+    name="account",
+    description=f"The account you want to operate on.",
+    required=True,
+    autocomplete=quickAccountAutoComplete
+)
+
+# -------------------------------
+# -- Not really auto completes --
+# -------------------------------
+
+NotesOptions = discord.Option(
+    str,
+    name="note",
+    description="The note you want to add to the account",
+    required=False,
+    max_length=255
+)
+
+AccountOptions = discord.Option(
+    str,
+    name="accounts",
+    description="The accounts you want to add to the list",
+    required=True,
+    max_length=22
 )
