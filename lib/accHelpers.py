@@ -3,9 +3,6 @@ import asyncio
 import discord
 from sqlalchemy import engine
 from sqlalchemy.orm import Session
-import logging
-import aiohttp
-from PIL import ImageColor
 
 from lib.Helper import AddAcc, RmAcc, compTiers
 from lib.ormDefinitions import ValoAccount
@@ -13,7 +10,13 @@ from bot.views.accountSelector import accountSelectorFactory
 from lib.get_accs import get_acc
 
 
-async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine,  account: str, region: str, note: str) -> discord.Embed:
+async def addHelper(
+    ctx: discord.ApplicationContext,
+    type: str, engine: engine.Engine,
+    account: str,
+    region: str,
+    note: str
+) -> discord.Embed:
     try:
         account, tag = account.split("#") if account != None else None
     except ValueError:
@@ -42,7 +45,12 @@ async def addHelper(ctx: discord.ApplicationContext, type: str, engine: engine.E
             title="Error", description="Please specify a region", color=discord.Color.red()))
 
 
-async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine, account: str):
+async def removeHelper(
+    ctx: discord.ApplicationContext,
+    type: str,
+    engine: engine.Engine,
+    account: str
+):
     try:
         account, tag = account.split("#") if account != None else None
     except ValueError:
@@ -57,7 +65,11 @@ async def removeHelper(ctx: discord.ApplicationContext, type: str, engine: engin
             title="ERROR", description="That account isn't in the database. You likely misspelled something", color=discord.Color.red()))
 
 
-async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.Engine):
+async def listHelper(
+    ctx: discord.ApplicationContext,
+    type: str,
+    engine: engine.Engine
+):
     with Session(engine) as session:
         author_accs: "list[ValoAccount]" = session.query(
             ValoAccount
@@ -79,7 +91,13 @@ async def listHelper(ctx: discord.ApplicationContext, type: str, engine: engine.
     return (embed)
 
 
-async def getAccFromList(ctx: discord.ApplicationContext, operation: str, engine: engine.Engine, callback: "callable" = get_acc, id=-1):
+async def getAccFromList(
+    ctx: discord.ApplicationContext,
+    operation: str,
+    engine: engine.Engine,
+    callback: "callable" = get_acc,
+    id=-1
+):
     # https://docs.pycord.dev/en/master/ext/pages/index.html <- good
     """Displays a list of accounts to the user and allows them to select one to get the stats of"""
     if id == -1:

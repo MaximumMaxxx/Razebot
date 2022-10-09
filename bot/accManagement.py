@@ -9,7 +9,7 @@ from lib.Helper import validRanks
 from lib.accHelpers import addHelper, removeHelper, listHelper
 from lib.ormDefinitions import *
 from lib.globals import engine
-from lib.autoCompletes import RegionAcOption, MyAccountAcOption
+from lib.autoCompletes import RegionAcOption, MyAccountAcOption, QuickAccountAcOption, NotesOptions, AccountOptions
 
 
 class accManagement(commands.Cog):
@@ -122,7 +122,10 @@ class accManagement(commands.Cog):
         await msg.edit(embed=embed, content=None)
 
     @myaccs.command()
-    async def list(self, ctx):
+    async def list(
+        self,
+        ctx
+    ):
         await ctx.respond(embed=await listHelper(
             ctx=ctx,
             type="M",
@@ -135,7 +138,7 @@ class accManagement(commands.Cog):
         ctx,
         account: str,
         region: RegionAcOption,
-        note: str
+        note: NotesOptions
     ):
         await ctx.respond(embed=await addHelper(
             ctx=ctx,
@@ -163,7 +166,10 @@ class accManagement(commands.Cog):
 # --------------------------------
 
     @quickaccs.command(name="list")
-    async def list(self, ctx):
+    async def list(
+        self,
+        ctx
+    ):
         await ctx.respond(embed=await listHelper(
             ctx=ctx,
             type="Q",
@@ -171,18 +177,28 @@ class accManagement(commands.Cog):
         ))
 
     @quickaccs.command(name="add")
-    async def qadd(self, ctx, account: str, note: str, region: str):
+    async def qadd(
+            self,
+            ctx,
+            account: QuickAccountAcOption,
+            note: NotesOptions,
+            region: RegionAcOption
+    ):
         await ctx.respond(embed=await addHelper(
             ctx=ctx,
             type="Q",
             engine=engine,
             account=account,
-            region=RegionAcOption,
+            region=region,
             note=note
         ))
 
     @quickaccs.command(name="remove")
-    async def qremove(self, ctx, account: str):
+    async def qremove(
+        self,
+        ctx,
+        account: QuickAccountAcOption
+    ):
         await ctx.respond(embed=await removeHelper(
             ctx=ctx,
             type="Q",

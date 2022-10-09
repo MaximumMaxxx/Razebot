@@ -10,7 +10,6 @@ from PIL import ImageColor
 
 from lib.Helper import compTiers, get_jstat
 from lib.rchelpers import httpStatusCheck
-from lib.globals import Jstats
 
 
 async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
