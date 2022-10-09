@@ -9,7 +9,8 @@ from lib.globals import engine
 from lib.Helper import compTiers as ct
 from lib.accHelpers import getAccFromList, get_acc
 from lib.ormDefinitions import *
-from lib.rchelpers import regionAutoComplete, past10
+from lib.rchelpers import past10
+from lib.autoCompletes import RegionAcOption
 
 
 class Rankcheck(commands.Cog):
@@ -50,12 +51,7 @@ class Rankcheck(commands.Cog):
                 name="account",
                 description="The VALORANT account you would like to check the rank of"
             ),
-            region: discord.Option(
-                str,
-                name="region",
-                description=f"The region the account is in. If not specified will default to the server's default region.",
-                autocomplete=regionAutoComplete
-            )
+            region: RegionAcOption
     ):
         # The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
         # Accounts is expected to be a list of tuples but you can just pass in a one item list and 0 and it acomplishes the same thing
@@ -78,13 +74,7 @@ class Rankcheck(commands.Cog):
         self,
         ctx: discord.ApplicationContext,
         user: discord.User,
-        region: discord.Option(
-            str,
-            name="region",
-            description=f"The region the account is in. If not specified will default to the server's default region.",
-            autocomplete=regionAutoComplete,
-            required=False
-        )
+        region: RegionAcOption
     ):
         # The formatting is a little wack but it does the thing hopefully and it's one line so I'll take the jank
 
@@ -106,7 +96,7 @@ class Rankcheck(commands.Cog):
         )
 
     @commands.slash_command(name="quickpast5", description="Get the stats of the last 5 matches for an account from your my accounts list")
-    async def qpast10(
+    async def qpast5(
             self,
             ctx: discord.ApplicationContext,
     ):
@@ -126,7 +116,7 @@ class Rankcheck(commands.Cog):
         )
 
     @commands.slash_command(name="mypast5", description="Get the stats of the last 5 matches for an account from your quick accounts list")
-    async def mpast10(
+    async def mpast5(
             self,
             ctx
     ):

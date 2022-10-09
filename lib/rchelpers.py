@@ -6,12 +6,7 @@ import aiohttp
 
 from lib.ormDefinitions import DisServer
 from lib.Helper import porpotionalAlign, compTiers
-from lib.globals import engine, validRegions, Jstats
-
-
-def regionAutoComplete(ctx: discord.AutocompleteContext):
-    """Returns the regions that start with what you've typed"""
-    return list(filter(lambda x: x.startswith(ctx.value.lower()), validRegions))
+from lib.globals import engine, Jstats
 
 
 def httpStatusCheck(jstat: Jstats) -> Union[discord.Embed, None]:

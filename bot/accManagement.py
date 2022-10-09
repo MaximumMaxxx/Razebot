@@ -9,6 +9,7 @@ from lib.Helper import validRanks
 from lib.accHelpers import addHelper, removeHelper, listHelper
 from lib.ormDefinitions import *
 from lib.globals import engine
+from lib.autoCompletes import RegionAcOption, MyAccountAcOption
 
 
 class accManagement(commands.Cog):
@@ -129,7 +130,13 @@ class accManagement(commands.Cog):
         ))
 
     @myaccs.command()
-    async def add(self, ctx, account: str, region: str, note: str):
+    async def add(
+        self,
+        ctx,
+        account: str,
+        region: RegionAcOption,
+        note: str
+    ):
         await ctx.respond(embed=await addHelper(
             ctx=ctx,
             type="M",
@@ -140,7 +147,11 @@ class accManagement(commands.Cog):
         ))
 
     @myaccs.command()
-    async def remove(self, ctx, account: str):
+    async def remove(
+        self,
+        ctx,
+        account: MyAccountAcOption
+    ):
         await ctx.respond(embed=await removeHelper(
             ctx=ctx,
             type="M",
@@ -166,7 +177,7 @@ class accManagement(commands.Cog):
             type="Q",
             engine=engine,
             account=account,
-            region=region,
+            region=RegionAcOption,
             note=note
         ))
 
