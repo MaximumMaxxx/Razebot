@@ -5,6 +5,7 @@ import logging
 from blueprints.api import blueprint as api_blueprint
 from blueprints.web import blueprint as web_blueprint
 from lib.globals import app, bot
+from lib.Helper import parseTrueFalse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename="Logs.log")
@@ -23,15 +24,21 @@ Globalextensions = [
 
 
 def run():  # Credit to Muffin's Dev#6537 for some of this code
-    # bot.loop.create_task(
-    #    app.run_task(
-    #        host=environ.get('webhost'),
-    #        port=environ.get('webport'),
-    #        debug=True
-    #    )
-    # )
+
+    print(f"Rnning with the webserver: {environ.get('runWebServer')}")
+    # Check if they want to run the webserver
+    # If they do, then create an async task and add it to the event loop
+    if parseTrueFalse(environ.get("runWebServer")):
+        bot.loop.create_task(
+            app.run_task(
+                host=environ.get('webhost'),
+                port=environ.get('webport'),
+                debug=True
+            )
+        )
 
     # Load in all the extensions
+    print("Loading extensions")
     for extension in Globalextensions:
         try:
             bot.load_extension(extension)
@@ -43,6 +50,7 @@ def run():  # Credit to Muffin's Dev#6537 for some of this code
                 f"{extension} failed to load [{error}]"
             )
 
+    print("Starting bot, this may take a minute or two")
     bot.run(
         environ.get('bottoken')
     )

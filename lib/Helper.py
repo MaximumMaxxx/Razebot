@@ -260,3 +260,15 @@ async def get_jstat(session, url):
     """
     async with session.get(url) as resp:
         return Jstats(await resp.json(), resp.status)
+
+
+def parseTrueFalse(value):
+    trueValues = ["true", "yes", "y", "1"]
+    falseValues = ["false", "no", "n", "0"]
+    if value.lower() in trueValues:
+        return True
+    elif value.lower() in falseValues:
+        return False
+    else:
+        print("Unable to parse true false value")
+        return None
