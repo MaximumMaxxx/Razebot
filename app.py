@@ -2,10 +2,13 @@
 from os import environ
 import logging
 
+import discord
+
 from blueprints.api import blueprint as api_blueprint
 from blueprints.web import blueprint as web_blueprint
 from lib.globals import app, bot
 from lib.Helper import parseTrueFalse
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename="Logs.log")
@@ -42,12 +45,12 @@ def run():  # Credit to Muffin's Dev#6537 for some of this code
     for extension in Globalextensions:
         try:
             bot.load_extension(extension)
-        except Exception as error:
+        except discord.ExtensionError as error:
             print(
                 f'{extension} failed to load [{error}]'
             )
             logging.error(
-                f"{extension} failed to load [{error}]"
+                "%i failed to load [%i]", extension, error
             )
 
     print("Starting bot, this may take a minute or two")
@@ -58,3 +61,4 @@ def run():  # Credit to Muffin's Dev#6537 for some of this code
 
 if __name__ == "__main__":
     run()
+
