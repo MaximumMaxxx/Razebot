@@ -1,8 +1,5 @@
-from code import interact
-from unicodedata import name
 import discord
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 
 from lib.globals import validRegions, engine
 from lib.ormDefinitions import *
@@ -62,7 +59,7 @@ def quickAccountAutoComplete(ctx: discord.AutocompleteContext):
     """
     Returns the account names that start with what you've typed.
     This is mostly used for accounts relating to `myaccs` and `myaccsdel`
-    the output pulls from the database so it's user specific
+    the output pulls from the database, so it's user specific
     """
 
     # Grab the user's accounts

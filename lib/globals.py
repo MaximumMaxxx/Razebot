@@ -10,7 +10,8 @@ from quart_csrf import CSRFProtect
 from sqlalchemy import create_engine
 from discord.ext import commands
 
-Jstats = namedtuple("Jstats", ["json", "status"])
+# Define a little helper constant to keep json, and it's status code together
+Jstat = namedtuple("Jstats", ["json", "status"])
 
 validRegions = ["AP", "BR", "EU", "KR", "NA", "LATAM"]
 
@@ -24,7 +25,8 @@ downarrow = "▼"  # "<:Downvote:909204210359357530>"  #
 equalarrow = "<:literallydying:941523511598514186>"
 
 
-# I'm pretty sure I'm allowed to redistribute this font, if it's yours and you want me to stop using it just message me on discord. MaxiumMaxx#0001
+# I'm pretty sure I'm allowed to redistribute this font, if it's yours, and you want me to stop using it just message
+# me on discord. MaxiumMaxx#0001
 discord_font = f"{os.getcwd()}/lib/whitneybook.otf"
 font_end_padding = "  "
 
@@ -54,4 +56,7 @@ bot = commands.Bot(
 )
 
 engine = create_engine(
-    os.environ.get('dburl'), echo=bool(os.environ.get('echo')), future=bool(os.environ.get('future')))
+    os.environ.get('dburl'),
+    echo=bool(os.environ.get('echo')),
+    future=bool(os.environ.get('future'))
+)

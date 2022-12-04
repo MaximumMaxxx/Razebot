@@ -11,7 +11,7 @@ from discord.commands import OptionChoice
 from PIL import ImageFont
 
 from lib.ormDefinitions import *
-from lib.globals import Jstats
+from lib.globals import Jstat
 
 
 def avaliableSettings():
@@ -259,7 +259,7 @@ async def get_jstat(session, url):
     A little helper function for the http requests
     """
     async with session.get(url) as resp:
-        return Jstats(await resp.json(), resp.status)
+        return Jstat(await resp.json(), resp.status)
 
 
 def parseTrueFalse(value):

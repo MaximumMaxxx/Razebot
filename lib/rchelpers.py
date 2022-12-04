@@ -6,10 +6,10 @@ import aiohttp
 
 from lib.ormDefinitions import DisServer
 from lib.Helper import porpotionalAlign, compTiers
-from lib.globals import engine, Jstats
+from lib.globals import engine, Jstat
 
 
-def httpStatusCheck(jstat: Jstats) -> Union[discord.Embed, None]:
+def httpStatusCheck(jstat: Jstat) -> Union[discord.Embed, None]:
     """Checks the status of the http request and returns an embed if there is an error"""
     if jstat.status == 200:
         return None
@@ -51,7 +51,7 @@ async def past10(ctx, account, region):
     matches = None
     async with aiohttp.ClientSession() as session:
         async with session.get(f"https://api.henrikdev.xyz/valorant/v1/mmr-history/{region}/{name}/{tag}") as r:
-            matches = Jstats(await r.json(), r.status)
+            matches = Jstat(await r.json(), r.status)
 
     check = httpStatusCheck(matches)
     if check is not None:

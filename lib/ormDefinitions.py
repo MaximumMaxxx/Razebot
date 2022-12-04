@@ -1,8 +1,10 @@
 # This file contains the schemeas for all the tables in the database
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship
+from lib.globals import engine
 
 Base = declarative_base()
+
 
 class ValoAccount(Base):
     __tablename__ = "valoaccounts"
@@ -32,3 +34,6 @@ class Role(Base):
     server_id = Column(String(19), ForeignKey("Servers.server_id"), primary_key=True)
     role_id = Column(String(19))
     valo_name = Column(String(16))
+
+
+Base.metadata.create_all(engine)

@@ -4,7 +4,8 @@ import logging
 
 from blueprints.api import blueprint as api_blueprint
 from blueprints.web import blueprint as web_blueprint
-from lib.globals import app, bot
+from sqlalchemy import MetaData
+from lib.globals import app, bot, engine
 from lib.Helper import parseTrueFalse
 
 # Configure logging

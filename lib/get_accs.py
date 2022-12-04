@@ -8,7 +8,7 @@ import aiohttp
 import logging
 from PIL import ImageColor
 
-from lib.Helper import compTiers, get_jstat
+from lib.Helper import compTiers, get_jstat, Jstat
 from lib.rchelpers import httpStatusCheck
 
 
@@ -28,7 +28,7 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
             tasks.append(asyncio.ensure_future(
                 get_jstat(session, link)))
 
-        jsons = await asyncio.gather(*tasks)
+        jsons = list[await asyncio.gather(*tasks)]
 
     accountReq, MH, MMR = jsons
 
@@ -47,7 +47,9 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
             mmr_change += game["mmr_change_to_last_game"]
 
         if len(MMR_json["data"]) == 0:
-            return discord.Embed(title="ERROR", description="No data avaliable for that player. Double check your spelling and try again.", color=discord.Color.red())
+            return discord.Embed(title="ERROR",
+                                 description="No data avaliable for that player. Double check your spelling and try again.",
+                                 color=discord.Color.red())
 
         rank = MMR_json["data"][0]["currenttierpatched"]
         tiernum = MMR_json["data"][0]["currenttier"]
@@ -59,7 +61,7 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
 
         color = compTiers()[tiernum]["color"][:6]
 
-        r, g, b = ImageColor.getcolor("#"+color, "RGB")
+        r, g, b = ImageColor.getcolor("#" + color, "RGB")
         embed = discord.Embed(
             color=discord.Color.from_rgb(r, g, b),
             description=f"The stats and rank for {name}#{tag}", title=f"{name}#{tag}"
@@ -69,10 +71,13 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
         embed.add_field(name="MMR", value=elo)
 
     elif MMR.status == 204:
-        return (discord.Embed(title="ERROR", description="Not enough recent data or wrong region", color=discord.Color.red()))
+        return discord.Embed(title="ERROR", description="Not enough recent data or wrong region",
+                             color=discord.Color.red())
 
     elif MMR.status == 429:
-        return (discord.Embed(title="ERROR", description="The bot has been rate limited. Please try again in a few minutes", color=discord.Color.red()))
+        return discord.Embed(title="ERROR",
+                             description="The bot has been rate limited. Please try again in a few minutes",
+                             color=discord.Color.red())
 
     else:
         logging.error(
@@ -92,6 +97,7 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
         MH_json = MH.json
         match_count = len(MH_json["data"])
         kills, deaths, assists, score = 0, 0, 0, 0
+        player_index = None
 
         for i in range(match_count):
             for j in range(len(MH_json["data"][i]["players"]["all_players"])):
@@ -102,18 +108,19 @@ async def get_acc(name: str, tag: str, region: str) -> discord.Embed:
             deaths += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["deaths"]
             assists += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["assists"]
             score += MH_json["data"][i]["players"]["all_players"][player_index]["stats"]["score"]
-        kills = round(kills/match_count, 1)
-        deaths = round(deaths/match_count, 1)
-        assists = round(assists/match_count, 1)
+        kills = round(kills / match_count, 1)
+        deaths = round(deaths / match_count, 1)
+        assists = round(assists / match_count, 1)
         score = round(score / match_count, 1)
 
         embed.add_field(name="Average stats from the last 5 games",
-                        value=f"KDA: {kills} | {deaths} | {assists} \n KDR: {round(kills/deaths,2)} \n Score: {score} \n MMR Change: {mmr_change}")
+                        value=f"KDA: {kills} | {deaths} | {assists} \n KDR: {round(kills / deaths, 2)} \n Score: {score} \n MMR Change: {mmr_change}"
+                        )
     else:
         embed.add_field(
             name="ERROR", value="Error getting other stats. If the issue persists please contact me @ MaximumMaxx#0001")
         logging.error(
-            f"Failure retrieving Match History data: {MH_json}")
+            f"Failure retrieving Match History data: {MH.json}")
     embed.set_image(url=image)
     embed.set_footer(text="Razebot by MaximumMaxx")
     return (embed)
